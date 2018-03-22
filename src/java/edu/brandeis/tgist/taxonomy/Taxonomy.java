@@ -40,6 +40,9 @@ public class Taxonomy {
 	/** The minimum term count required for a term to be included. */
 	public static int MINCOUNT = 2;
 
+	// TODO: allow changing TECHSCORE and MINCOUNT in the calling method and add
+	// the values chosen to the properties file
+
 	public String name;
 	public String location;
 	public HashMap<String, Technology> technologies;
@@ -133,8 +136,8 @@ public class Taxonomy {
 
 	@Override
 	public String toString() {
-		return String.format("<taxonomy.Taxonomy name=%s location=%s terms=%d features=%d>",
-				this.name, this.location, this.technologies.size(), this.features.size());
+		return String.format("<taxonomy.Taxonomy %s terms=%d features=%d>",
+				this.name, this.technologies.size(), this.features.size());
 	}
 
 	public void prettyPrint() {
@@ -283,6 +286,19 @@ public class Taxonomy {
 		}
 
 		System.out.println(String.format("Wrote features to %s", vFile));
+	}
+
+	void rhhr() {
+		Node top = new Node("Top");
+		int c = 0;
+		for (Technology tech : this.technologies.values()) {
+			c++;
+			if (c > 100) break;
+			//System.out.println("\n" + tech.name);
+			String[] tokens = tech.name.split(" ");
+			top.insert(tech, tokens, tokens.length);
+		}
+		top.prettyPrint();
 	}
 
 }

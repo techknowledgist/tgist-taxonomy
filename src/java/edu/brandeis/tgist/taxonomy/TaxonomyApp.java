@@ -6,14 +6,29 @@ import java.util.logging.Logger;
 
 public class TaxonomyApp {
 
-	static final String CLASSIFICATION = "/DATA/techwatch/SignalProcessing";
-	static final String TERMS = "/DATA/techwatch/SignalProcessing/classify.MaxEnt.out.s4.scores.sum.az";
-	static final String FEATURES = "/DATA/techwatch/SignalProcessing.txt.gz";
+	static String DATA = "/DATA/techwatch/";
+	static String CORPUS, TERMS, FEATS, TAXONOMY;
 
 	public static void main(String[] args) {
-		//createTaxonomy("test", "test");
-		openTaxonomy("test");
-		//importData("test");
+
+		CORPUS = "SignalProcessing";
+		CORPUS = "SignalProcessingResolution";
+
+		if (CORPUS.equals("SignalProcessing")) {
+			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
+			FEATS = DATA + "SignalProcessing.txt.gz";
+
+		} else if (CORPUS.equals("SignalProcessingResolution")) {
+			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
+			FEATS = DATA + "SignalProcessingEmpty.txt.gz";
+		}
+
+		TAXONOMY = "taxonomy-" + CORPUS;
+
+		//createTaxonomy(CORPUS, TAXONOMY);
+		//openTaxonomy(TAXONOMY);
+		//importData(TAXONOMY);
+		rhhr(TAXONOMY);
 	}
 
 	private static void createTaxonomy(String name, String location) {
@@ -40,7 +55,17 @@ public class TaxonomyApp {
 		Taxonomy tax;
 		try {
 			tax = new Taxonomy(taxonomyLocation);
-			tax.importData(TERMS, FEATURES);
+			tax.importData(TERMS, FEATS);
+		} catch (IOException ex) {
+			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	private static void rhhr(String taxonomyLocation) {
+		Taxonomy tax;
+		try {
+			tax = new Taxonomy(taxonomyLocation);
+			tax.rhhr();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
 		}
