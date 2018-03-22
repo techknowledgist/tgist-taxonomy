@@ -105,23 +105,29 @@ public class Taxonomy {
 		Scanner sc;
 
 		// reading the technologies in the taxonomy
-		inputStream = new FileInputStream(tFile);
-		sc = new Scanner(inputStream, "UTF-8");
-		while (sc.hasNextLine()) {
-			String line = sc.nextLine();
-			String[] fields = line.split("\t");
-			String term = fields[0];
-			float score = Float.parseFloat(fields[1]);
-			int count = Integer.parseInt(fields[2]);
-			this.technologies.put(term, new Technology(term, score, count));
+		if (new File(tFile).isFile()) {
+			System.out.println("Reading technologies...");
+			inputStream = new FileInputStream(tFile);
+			sc = new Scanner(inputStream, "UTF-8");
+			while (sc.hasNextLine()) {
+				String line = sc.nextLine();
+				String[] fields = line.split("\t");
+				String term = fields[0];
+				float score = Float.parseFloat(fields[1]);
+				int count = Integer.parseInt(fields[2]);
+				this.technologies.put(term, new Technology(term, score, count));
+			}
 		}
 
 		// reading the feature vectors in the taxonomy
-		inputStream = new FileInputStream(vFile);
-		sc = new Scanner(inputStream, "UTF-8");
-		while (sc.hasNextLine()) {
-			String line = sc.nextLine();
-			//this.features.add(new FeatureVector(line));
+		if (new File(vFile).isFile()) {
+			System.out.println("Reading features...");
+			inputStream = new FileInputStream(vFile);
+			sc = new Scanner(inputStream, "UTF-8");
+			while (sc.hasNextLine()) {
+				String line = sc.nextLine();
+				this.features.add(new FeatureVector(line));
+			}
 		}
 	}
 

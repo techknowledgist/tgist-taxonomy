@@ -20,10 +20,7 @@ public class FeatureVector {
 	 * @param line Tab-separated String.
 	 */
 	FeatureVector(String line) {
-		//System.out.println(line);
 		String[] fields = line.split("\t");
-		//System.out.println(String.join(" === ", fields));
-		//System.exit(0);
 		this.fileName = fields[0];
 		this.id = fields[1];
 		this.year = Integer.parseInt(fields[2]);
@@ -33,10 +30,9 @@ public class FeatureVector {
 
 	@Override
 	public String toString() {
-		System.out.println(String.join("--", this.features));
 		return String.format(
-				"<FeatureVector %s term='%s' features=%d %s>",
-				this.fileName, this.term, this.features.length, this.features[1]);
+				"<FeatureVector %s term='%s' features=%d>",
+				this.fileName, this.term, this.features.length);
 	}
 
 	String asTabSeparatedFields() {
