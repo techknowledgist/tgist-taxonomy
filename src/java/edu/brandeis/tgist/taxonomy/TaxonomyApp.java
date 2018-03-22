@@ -9,11 +9,11 @@ public class TaxonomyApp {
 	static final String CLASSIFICATION = "/DATA/techwatch/SignalProcessing";
 	static final String TERMS = "/DATA/techwatch/SignalProcessing/classify.MaxEnt.out.s4.scores.sum.az";
 	static final String FEATURES = "/DATA/techwatch/SignalProcessing.txt.gz";
-	
+
 	public static void main(String[] args) {
 		//createTaxonomy("test", "test");
 		openTaxonomy("test");
-		//addData("test");
+		//importData("test");
 	}
 
 	private static void createTaxonomy(String name, String location) {
@@ -28,18 +28,19 @@ public class TaxonomyApp {
 		Taxonomy taxonomy = null;
 		try {
 			taxonomy = new Taxonomy(name);
-			System.out.println(taxonomy);
+			//System.out.println(taxonomy);
+			taxonomy.prettyPrint();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		return taxonomy;
 	}
 
-	private static void addData(String taxonomyLocation) {
+	private static void importData(String taxonomyLocation) {
 		Taxonomy tax;
 		try {
 			tax = new Taxonomy(taxonomyLocation);
-			tax.addData(TERMS, FEATURES);
+			tax.importData(TERMS, FEATURES);
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
 		}

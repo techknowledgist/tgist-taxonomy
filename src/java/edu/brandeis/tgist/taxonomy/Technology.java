@@ -7,11 +7,11 @@ public class Technology {
 	float score;
 
 	Technology(String term, float score, int count) {
-		this.name = term;	 
+		this.name = term;
 		this.count = count;
 		this.score = score;
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format(
