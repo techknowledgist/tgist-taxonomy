@@ -7,10 +7,11 @@ import java.util.Map;
 public class Node {
 
 	static final boolean DEBUG = false;
-	static final String ANSI_RESET = "\u001B[0m";
-	static final String ANSI_BLUE = "\u001B[34m";
-	static final String ANSI_GREEN = "\u001B[32m";
-	static final String ANSI_RED = "\u001B[31m";
+	static final String BLUE = "\u001B[34m";
+	static final String GREEN = "\u001B[32m";
+	static final String RED = "\u001B[31m";
+	static final String BOLD = "\u001B[31m";
+	static final String END = "\u001B[0m";
 
 	public String name;
 	public Node parent;
@@ -26,7 +27,7 @@ public class Node {
 
 	static void warning(String msg) {
 		// TODO: this does not work for the windows command prompt
-		System.out.println(ANSI_RED + msg + ANSI_RESET);
+		System.out.println(RED + msg + END);
 	}
 
 	@Override
@@ -79,10 +80,44 @@ public class Node {
 	public void prettyPrint() {
 		prettyPrint("");
 	}
+
 	private void prettyPrint(String indent) {
 		System.out.println(indent + this);
-		for (Node child : this.children.values()) {
+		for (Node child : this.children.values())
 			child.prettyPrint(indent + "  ");
+	}
+
+	void addIsaRelations(Technology hypernym) {
+
+		//System.out.println(BOLD + this.name + END + " " + this.technology + " " + BLUE + hypernym + END);
+		Technology nhypernym = hypernym;
+		if (this.technology != null) {
+			if (hypernym != null) {
+				//System.out.println("--> ADDING " + hypernym.name + " ==> " + this.technology.name);
+				IsaRelation isa = new IsaRelation("rhhrRule", hypernym, this.technology);
+				hypernym.isaRelations.add(isa);
+				hypernym.hyponyms.add(this.technology);
+				this.technology.isaRelations.add(isa);
+				this.technology.hypernyms.add(hypernym);
+			}
+			hypernym = this.technology;
+			nhypernym = this.technology;
+			//System.out.println("--> Updating hypernym to " + GREEN + hypernym.name + END);
+		}
+
+		//System.out.println("--> Hypernym is now " + GREEN + hypernym + END);
+
+		//for (int i = 0; i < 2; i++)
+		//	System.out.println("--> Hypernym in for " + GREEN + hypernym + END);
+
+		//Set<String> childNames = this.children.keySet();
+		//for (String s : childNames) {
+		//	System.out.println("--> Hypernym in set " + GREEN + hypernym + END + " " + s);
+		//}
+
+		for (Node child : this.children.values()) {
+			//System.out.println("--> Hypernym in loop " + GREEN + hypernym + END);
+			child.addIsaRelations(nhypernym);
 		}
 	}
 

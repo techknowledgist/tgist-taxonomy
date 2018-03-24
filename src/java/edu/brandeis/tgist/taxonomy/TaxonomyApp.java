@@ -12,7 +12,7 @@ public class TaxonomyApp {
 	public static void main(String[] args) {
 
 		CORPUS = "SignalProcessing";
-		CORPUS = "SignalProcessingResolution";
+		//CORPUS = "SignalProcessingResolution";
 
 		if (CORPUS.equals("SignalProcessing")) {
 			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
@@ -28,7 +28,8 @@ public class TaxonomyApp {
 		//createTaxonomy(CORPUS, TAXONOMY);
 		//openTaxonomy(TAXONOMY);
 		//importData(TAXONOMY);
-		rhhr(TAXONOMY);
+		//rhhr(TAXONOMY);
+		userLoop(TAXONOMY);
 	}
 
 	private static void createTaxonomy(String name, String location) {
@@ -43,7 +44,6 @@ public class TaxonomyApp {
 		Taxonomy taxonomy = null;
 		try {
 			taxonomy = new Taxonomy(name);
-			//System.out.println(taxonomy);
 			taxonomy.prettyPrint();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
@@ -52,9 +52,8 @@ public class TaxonomyApp {
 	}
 
 	private static void importData(String taxonomyLocation) {
-		Taxonomy tax;
 		try {
-			tax = new Taxonomy(taxonomyLocation);
+			Taxonomy tax = new Taxonomy(taxonomyLocation);
 			tax.importData(TERMS, FEATS);
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
@@ -62,12 +61,24 @@ public class TaxonomyApp {
 	}
 
 	private static void rhhr(String taxonomyLocation) {
-		Taxonomy tax;
 		try {
-			tax = new Taxonomy(taxonomyLocation);
+			Taxonomy tax = new Taxonomy(taxonomyLocation);
+			tax.prettyPrint();
 			tax.rhhr();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	private static void userLoop(String taxonomyLocation) {
+		try {
+			Taxonomy tax = new Taxonomy(taxonomyLocation);
+			tax.prettyPrint();
+			tax.rhhr();
+			tax.userLoop();
+		} catch (IOException ex) {
+			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
+
 		}
 	}
 }

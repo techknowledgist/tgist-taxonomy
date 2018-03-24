@@ -293,12 +293,43 @@ public class Taxonomy {
 		int c = 0;
 		for (Technology tech : this.technologies.values()) {
 			c++;
-			if (c > 100) break;
+			//if (c > 100) break;
 			//System.out.println("\n" + tech.name);
 			String[] tokens = tech.name.split(" ");
 			top.insert(tech, tokens, tokens.length);
 		}
-		top.prettyPrint();
+		//top.prettyPrint();
+		top.addIsaRelations(null);
 	}
+
+	void userLoop() {
+		try (Scanner reader = new Scanner(System.in)) {
+			while (true) {
+				System.out.print("\nEnter a term: ");
+				String term = reader.nextLine();
+				if (term.equals("q"))
+					break;
+				// some abbreviations for debugging
+				if (term.equals("ga")) term = "genetic algorithm";
+				if (term.equals("aga")) term = "adaptive genetic algorithm";
+				//System.out.println(String.format("[%s]", term));
+				Technology tech = this.technologies.get(term);
+				if (tech == null)
+					System.out.println("Not in taxonomy");
+				else
+					printFragment(tech);
+			}
+		}
+	}
+	
+	void printFragment(Technology tech) {
+		System.out.println();
+		for (Technology hyper : tech.hypernyms) 
+			System.out.println(hyper.name);
+		System.out.println("  " + Node.BLUE + tech.name + Node.END);
+		for (Technology hypo : tech.hyponyms) 
+			System.out.println("    " + hypo.name);
+	}
+
 
 }
