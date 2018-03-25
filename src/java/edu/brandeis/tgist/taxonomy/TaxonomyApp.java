@@ -25,11 +25,18 @@ public class TaxonomyApp {
 
 		TAXONOMY = "taxonomy-" + CORPUS;
 
-		//createTaxonomy(CORPUS, TAXONOMY);
-		//openTaxonomy(TAXONOMY);
-		//importData(TAXONOMY);
-		//rhhr(TAXONOMY);
-		userLoop(TAXONOMY);
+		// Initialization
+		// createTaxonomy(CORPUS, TAXONOMY);
+
+		// Data import
+		// Taxonomy tax = openTaxonomy(TAXONOMY);
+		// tax.importData(TERMS, FEATS);
+
+		// Generating the hierarchy and adding relations
+		Taxonomy taxonomy = openTaxonomy(TAXONOMY);
+		taxonomy.rhhr();
+		taxonomy.addRelations();
+		taxonomy.userLoop();
 	}
 
 	private static void createTaxonomy(String name, String location) {
@@ -51,34 +58,4 @@ public class TaxonomyApp {
 		return taxonomy;
 	}
 
-	private static void importData(String taxonomyLocation) {
-		try {
-			Taxonomy tax = new Taxonomy(taxonomyLocation);
-			tax.importData(TERMS, FEATS);
-		} catch (IOException ex) {
-			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
-		}
-	}
-
-	private static void rhhr(String taxonomyLocation) {
-		try {
-			Taxonomy tax = new Taxonomy(taxonomyLocation);
-			tax.prettyPrint();
-			tax.rhhr();
-		} catch (IOException ex) {
-			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
-		}
-	}
-
-	private static void userLoop(String taxonomyLocation) {
-		try {
-			Taxonomy tax = new Taxonomy(taxonomyLocation);
-			tax.prettyPrint();
-			tax.rhhr();
-			tax.userLoop();
-		} catch (IOException ex) {
-			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
-
-		}
-	}
 }

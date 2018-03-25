@@ -11,11 +11,13 @@ public class Technology {
 	List<Technology> hypernyms;
 	List<Technology> hyponyms;
 	List<IsaRelation> isaRelations;
-	
+	List<Relation> relations;
+
 	Technology(String term, float score, int count) {
 		this.name = term;
 		this.count = count;
 		this.score = score;
+		this.relations = new ArrayList<>();
 		this.isaRelations = new ArrayList<>();
 		this.hypernyms = new ArrayList<>();
 		this.hyponyms = new ArrayList<>();

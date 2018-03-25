@@ -16,9 +16,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
@@ -288,9 +291,20 @@ public class Taxonomy {
 		System.out.println(String.format("Wrote features to %s", vFile));
 	}
 
+	/**
+	 * Apply the righthand head rule to elements in the taxonomy. As a result,
+	 * instances of IsaRelation are added to technologies such that if isa(t1,t2)
+	 * appears as a IsaRelation on both t1 and t1. In addition, if isa(t1,t2) then
+	 * t1 is added as a hypernym to t2 and t2 is added as a hyponym to t1.
+	 */
 	void rhhr() {
 		Node top = new Node("Top");
 		int c = 0;
+		// The way this works is by creating a tree where nodes are inserted
+		// depending on the tokens in the term. The top node Node("Top") has no
+		// tokens, a node Node("door") would be added as a direct child of Top
+		// and a node Node("iron door") would be added as an immediate child of
+		// Node("door"). Nodes can be associated with an instance of Technology.
 		for (Technology tech : this.technologies.values()) {
 			c++;
 			//if (c > 100) break;
@@ -300,6 +314,40 @@ public class Taxonomy {
 		}
 		//top.prettyPrint();
 		top.addIsaRelations(null);
+	}
+
+	/**
+	 * Add relations to technologies in the ontology. For now, we have the
+	 * extremely simplistic approach that technologies are related if they occur
+	 * in the same document (that is, the same WoS abstract). That will change.
+	 */
+	// TODO: should probably go to its own class
+	void addRelations() {
+		Map<String, List<Technology>> relatedTechnologies;
+		relatedTechnologies = new HashMap<>();
+		int count = 0;
+		for (FeatureVector vector : this.features) {
+			count++;
+			//if (count > 50) break;
+			relatedTechnologies.putIfAbsent(vector.fileName, new ArrayList<>());
+			relatedTechnologies.get(vector.fileName).add(this.technologies.get(vector.term));
+		}
+		for (String fname : relatedTechnologies.keySet()) {
+			//System.out.println(fname);
+			Set<Technology> s = new HashSet(relatedTechnologies.get(fname));
+			//for (Technology tech : s)
+			//	System.out.println("  " + tech);
+			Object[] a = s.toArray();
+			for (int i = 0; i < a.length; i++) {
+				for (int j = i + 1; j < a.length; j++) {
+					Technology t1 = (Technology) a[i];
+					Technology t2 = (Technology) a[j];
+					t1.relations.add(new Relation(Relation.COOCCURENCE_RELATION, t1, t2));
+					t2.relations.add(new Relation(Relation.COOCCURENCE_RELATION, t2, t1));
+					//System.out.println(String.format("%d-%d", i, j));
+				}
+			}
+		}
 	}
 
 	void userLoop() {
@@ -321,15 +369,20 @@ public class Taxonomy {
 			}
 		}
 	}
-	
+
 	void printFragment(Technology tech) {
 		System.out.println();
-		for (Technology hyper : tech.hypernyms) 
+		for (Technology hyper : tech.hypernyms)
 			System.out.println(hyper.name);
 		System.out.println("  " + Node.BLUE + tech.name + Node.END);
-		for (Technology hypo : tech.hyponyms) 
+		int relCount = 0;
+		for (Relation rel : tech.relations) {
+			relCount++;
+			if (relCount > 10) break;
+			System.out.println("    " + rel);
+		}
+		for (Technology hypo : tech.hyponyms)
 			System.out.println("    " + hypo.name);
 	}
-
 
 }
