@@ -25,18 +25,32 @@ public class TaxonomyApp {
 
 		TAXONOMY = "taxonomy-" + CORPUS;
 
-		// Initialization
-		// createTaxonomy(CORPUS, TAXONOMY);
+		boolean runInitialization = false;
+		boolean runImport = false;
+		boolean runBuilder = false;
+		boolean runLoop = true;
 
-		// Data import
-		// Taxonomy tax = openTaxonomy(TAXONOMY);
-		// tax.importData(TERMS, FEATS);
+		if (runInitialization)
+			createTaxonomy(CORPUS, TAXONOMY);
 
-		// Generating the hierarchy and adding relations
-		Taxonomy taxonomy = openTaxonomy(TAXONOMY);
-		taxonomy.rhhr();
-		taxonomy.addRelations();
-		taxonomy.userLoop();
+		if (runImport) {
+			Taxonomy tax = openTaxonomy(TAXONOMY);
+			try {
+				tax.importData(TERMS, FEATS);
+			} catch (IOException ex) {
+				Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }}
+
+		if (runBuilder) {
+			try {
+				Taxonomy taxonomy = openTaxonomy(TAXONOMY);
+				taxonomy.buildTaxonomy();
+			} catch (IOException ex) {
+				Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }}
+
+		if (runLoop) {
+			Taxonomy taxonomy = openTaxonomy(TAXONOMY);
+			taxonomy.userLoop();
+		}
 	}
 
 	private static void createTaxonomy(String name, String location) {

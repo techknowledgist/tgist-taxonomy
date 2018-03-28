@@ -10,7 +10,8 @@ public class Node {
 	static final String BLUE = "\u001B[34m";
 	static final String GREEN = "\u001B[32m";
 	static final String RED = "\u001B[31m";
-	static final String BOLD = "\u001B[31m";
+	static final String BOLD = "\u001B[1m";
+	static final String UNDER = "\u001B[4m";
 	static final String END = "\u001B[0m";
 
 	public String name;
@@ -94,13 +95,11 @@ public class Node {
 		if (this.technology != null) {
 			if (hypernym != null) {
 				//System.out.println("--> ADDING " + hypernym.name + " ==> " + this.technology.name);
-				IsaRelation isa = new IsaRelation("rhhrRule", hypernym, this.technology);
-				hypernym.isaRelations.add(isa);
-				hypernym.hyponyms.add(this.technology);
+				IsaRelation isa = new IsaRelation(IsaRelation.RHHR, this.technology, hypernym);
 				this.technology.isaRelations.add(isa);
 				this.technology.hypernyms.add(hypernym);
+				hypernym.hyponyms.add(this.technology);
 			}
-			hypernym = this.technology;
 			nhypernym = this.technology;
 			//System.out.println("--> Updating hypernym to " + GREEN + hypernym.name + END);
 		}
