@@ -7,12 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -165,22 +163,6 @@ public class Taxonomy {
 		TaxonomyWriter.writeFeatures(vFile, this.features);
 	}
 
-
-	/**
-	 * Build a taxonomy given existing list of technologies and feature vectors.
-	 *
-	 * This loads the feature vectors and then runs the morphological rules and
-	 * a simple relation extractor. More components will be added to this.
-	 *
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 */
-	void buildTaxonomy() throws FileNotFoundException, IOException {
-		loadFeatures();
-		rhhr();
-		addRelations();
-	}
-
 	/**
 	 * Load the features.
 	 *
@@ -228,8 +210,7 @@ public class Taxonomy {
 	 */
 	void addRelations() throws IOException {
 		int relationCount = 0;
-		Map<String, List<Technology>> allTechs;
-		allTechs = groupTechnologiesByDocument();
+		Map<String, List<Technology>> allTechs = groupTechnologiesByDocument();
 		for (String fname : allTechs.keySet()) {
 			//System.out.println(fname);
 			Object[] docTechs = allTechs.get(fname).toArray();
@@ -254,16 +235,18 @@ public class Taxonomy {
 	}
 
 	private	Map<String, List<Technology>> groupTechnologiesByDocument() {
-		Map<String, List<Technology>> technologies;
-		technologies = new HashMap<>();
+		//System.out.println(ObjectGraphMeasurer.measure(this.features));
+		//System.exit(0);
+		Map<String, List<Technology>> groupedTechnologies;
+		groupedTechnologies = new HashMap<>();
 		for (FeatureVector vector : this.features) {
-			technologies
+			groupedTechnologies
 					.putIfAbsent(vector.fileName, new ArrayList<>());
-			technologies
+			groupedTechnologies
 					.get(vector.fileName)
 					.add(this.technologies.get(vector.term));
 		}
-		return technologies;
+		return groupedTechnologies;
 	}
 
 	void userLoop() {
@@ -287,15 +270,20 @@ public class Taxonomy {
 	}
 
 	void printFragment(Technology tech) {
-		System.out.println();
+		String hyphens = "-------------------------------------------------";
+		System.out.println("\n" + hyphens + "\n");
 		if (tech.hypernyms.isEmpty())
 			System.out.println("Top");
 		else {
 			for (Technology hyper : tech.hypernyms)
 				System.out.println(hyper.name); }
 		System.out.println("  " + Node.BLUE + Node.BOLD + tech.name + Node.END);
-		for (Technology hypo : tech.hyponyms)
+		int hypoCount = 0;
+		for (Technology hypo : tech.hyponyms) {
+			hypoCount++;
+			if (hypoCount > 10) break;
 			System.out.println("    " + hypo.name);
+		}
 		System.out.println("\n" + Node.UNDER + "Related terms:" + Node.END + "\n");
 		int relCount = 0;
 		for (String techName : tech.relations.keySet()) {
@@ -305,7 +293,29 @@ public class Taxonomy {
 			String relTarget = rel.target.name;
 			System.out.println("    " + relTarget);
 		}
+		System.out.println("\n" + hyphens);
 	}
 
+	void exportTables(String outputDir) throws IOException {
+		new File(outputDir).mkdirs();
+		TaxonomyWriter.writeTermsAsTable(
+				txtFile(this.location, TECHNOLOGIES_FILE),
+				sqlFile(outputDir, TECHNOLOGIES_FILE));
+		TaxonomyWriter.writeHierarchyAsTable(
+				txtFile(this.location, HIERARCHY_FILE),
+				sqlFile(outputDir, HIERARCHY_FILE));
+		TaxonomyWriter.writeRelationsAsTable(
+				txtFile(this.location, RELATIONS_FILE),
+				sqlFile(outputDir, RELATIONS_FILE));
+	}
+
+	String txtFile(String directory, String filename) {
+		return directory + File.separator + filename;
+	}
+
+	String sqlFile(String directory, String filename) {
+		String filebase = filename.substring(0, filename.lastIndexOf('.'));
+		return directory + File.separator + filebase + ".sql";
+	}
 
 }

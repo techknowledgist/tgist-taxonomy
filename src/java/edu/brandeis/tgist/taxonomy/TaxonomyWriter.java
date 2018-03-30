@@ -1,9 +1,14 @@
 
 package edu.brandeis.tgist.taxonomy;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -117,6 +122,125 @@ public class TaxonomyWriter {
 				}
 			}
 		}
+	}
+
+	static void writeTermsAsTable(String in, String out) throws IOException {
+		// TODO: this code structure is repeated below, use functional programming
+		System.out.println(out);
+		BufferedReader reader = getReader(in);
+		BufferedWriter writer = getWriter(out);
+		try {
+			while (true) {
+				String line = reader.readLine();
+				if (line == null) break;
+				insertStatementForTechnologiesTable(writer, line);
+				//writer.write(line + "\n");
+			}
+		} finally {
+			if (reader != null) reader.close();
+			if (writer != null) writer.close();
+		}
+	}
+
+	static void writeHierarchyAsTable(String inFile, String outFile) throws IOException {
+		System.out.println(outFile);
+		BufferedReader reader = getReader(inFile);
+		BufferedWriter writer = getWriter(outFile);
+		try {
+			String currentTerm = null;
+			while (true) {
+				String line = reader.readLine();
+				if (line == null) break;
+				if (line.startsWith("\t")) {
+					insertStatementForHierarchyTable(writer, currentTerm, line);
+				} else {
+					currentTerm = line.trim(); }
+			}
+		} finally {
+			if (reader != null) reader.close();
+			if (writer != null) writer.close();
+		}
+	}
+
+	static void writeRelationsAsTable(String in, String outFile) throws IOException {
+		System.out.println(outFile);
+		BufferedReader reader = getReader(in);
+		BufferedWriter writer = getWriter(outFile);
+		try {
+			String currentTerm = null;
+			while (true) {
+				String line = reader.readLine();
+				if (line == null) break;
+				if (line.startsWith("\t")) {
+					insertStatementForRelationsTable(writer, currentTerm, line);
+					//writer.write(currentTerm + line + "\n");
+				} else {
+					currentTerm = line.trim(); }
+			}
+		} finally {
+			if (reader != null) reader.close();
+			if (writer != null) writer.close();
+		}
+	}
+
+	private static BufferedReader getReader(String f) throws FileNotFoundException {
+		return new BufferedReader(
+				new InputStreamReader(
+						new FileInputStream(new File(f)),
+						StandardCharsets.UTF_8));
+	}
+
+	private static BufferedWriter getWriter(String f) throws FileNotFoundException {
+		return new BufferedWriter(
+				new OutputStreamWriter(
+						new FileOutputStream(new File(f)),
+						StandardCharsets.UTF_8));
+	}
+
+	private static String quote(String text) {
+		return "\"" + text + "\"";
+	}
+
+	private static void insertStatementForHierarchyTable(
+			BufferedWriter writer, String currentTerm, String line)
+			throws IOException {
+
+		String[] fields = line.trim().split("\t");
+		String s = String.format(
+				"INSERT INTO hierarchy VALUES (%s, %s, %s, %s);\n",
+				quote(currentTerm), // source
+				quote(fields[0]),	// type
+				quote(fields[1]),	// subtype
+				quote(fields[2]));	// target
+		writer.write(s);
+	}
+
+	private static void insertStatementForRelationsTable(
+			BufferedWriter writer, String currentTerm, String line)
+			throws IOException {
+
+		String[] fields = line.trim().split("\t");
+		String s = String.format(
+				"INSERT INTO relations VALUES (%s, %s, %s, %s, %s);\n",
+				quote(currentTerm), // source
+				quote(fields[0]),	// type
+				quote(fields[1]),	// subtype
+				fields[2],			// count
+				quote(fields[3]));	// target
+		writer.write(s);
+	}
+
+	private static void insertStatementForTechnologiesTable(
+			BufferedWriter writer, String line)
+			throws IOException {
+
+		String[] fields = line.trim().split("\t");
+		String s = String.format(
+				"INSERT INTO technologies VALUES (%s, %s, %s);\n",
+				quote(fields[0]),	// name
+				fields[1],			// tscore
+				fields[2]);			// count
+		writer.write(s);
 	}
 
 }

@@ -67,11 +67,16 @@ public class TaxonomyLoader {
 	 * @throws FileNotFoundException
 	 */
 	static void loadFeatures(String vFile, Taxonomy taxonomy) throws FileNotFoundException {
+
 		if (new File(vFile).isFile()) {
 			System.out.println("Reading features...");
 			FileInputStream inputStream = new FileInputStream(vFile);
 			Scanner sc = new Scanner(inputStream, "UTF-8");
+			int c = 0;
 			while (sc.hasNextLine()) {
+				c++;
+				if ((c % 10000) == 0) System.out.println(c);
+				if (c > 50000) break;
 				String line = sc.nextLine();
 				taxonomy.features.add(new FeatureVector(line));
 			}
@@ -84,20 +89,31 @@ public class TaxonomyLoader {
 			FileInputStream inputStream = new FileInputStream(hFile);
 			Scanner sc = new Scanner(inputStream, "UTF-8");
 			Technology currentTechnology = null;
+			int l = 0;
 			while (sc.hasNextLine()) {
+				l++;
 				String line = sc.nextLine();
+				//System.out.print(l);
+				//System.out.println(" ==> "+line);
 				String[] fields = line.trim().split("\t");
 				if (fields.length == 1) {
 					currentTechnology = taxonomy.technologies.get(fields[0]);
-					//System.out.println(currentTechnology);
+					//System.out.println("  "+currentTechnology);
 				} else {
-					//System.out.println(fields[0]);
+					//System.out.println("  "+fields[0]);
 					String reltype = fields[1];
 					Technology target = taxonomy.technologies.get(fields[2]);
-					IsaRelation isa = new IsaRelation(reltype, currentTechnology, target);
-					currentTechnology.isaRelations.add(isa);
-					currentTechnology.hypernyms.add(target);
-					target.hyponyms.add(currentTechnology);
+					// Sometimes the technology is null (and I assume that the target
+					// can also be null). Skip these cases.
+					// TODO: this is usually when the technology starts/end with
+					// a space or tab, take care of those when first importing
+					// technologies
+					if (currentTechnology != null && target != null) {
+						IsaRelation isa = new IsaRelation(reltype, currentTechnology, target);
+						currentTechnology.isaRelations.add(isa);
+						currentTechnology.hypernyms.add(target);
+						target.hyponyms.add(currentTechnology);
+					}
 				}
 			}
 		}
@@ -186,6 +202,7 @@ public class TaxonomyLoader {
 		int c = 0;
 		while ((line = buffered.readLine()) != null) {
 			c++;
+			if ((c % 10000) == 0) System.out.println(c);
 			//if (c > 100_000) break;
 			String[] fields = line.split("\t");
 			if ("".equals(fields[0])) {

@@ -11,54 +11,122 @@ public class TaxonomyApp {
 
 	public static void main(String[] args) {
 
+		boolean DEVELOP_MODE = true;
+
+		if (args.length == 3 && args[0].equals("--init"))
+			initialize(args[1], args[2]);
+		else if (args.length == 4 && args[0].equals("--import"))
+			importData(args[1], args[2], args[3]);
+		else if (args.length == 2 && args[0].equals("--build-hierarchy"))
+			buildHierarchy(args[1]);
+		else if (args.length == 2 && args[0].equals("--add-relations"))
+			addRelations(args[1]);
+		else if (args.length == 1 )
+			userLoop(args[1]);
+		else if (! DEVELOP_MODE) {
+			printUsage();
+			System.exit(0); }
+
+		if (! DEVELOP_MODE) System.exit(0);
+
 		CORPUS = "SignalProcessing";
 		//CORPUS = "SignalProcessingResolution";
+		//CORPUS = "ComputerSciencePatents2007";
 
-		if (CORPUS.equals("SignalProcessing")) {
-			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
-			FEATS = DATA + "SignalProcessing.txt.gz";
-
-		} else if (CORPUS.equals("SignalProcessingResolution")) {
+		if (CORPUS.equals("SignalProcessingResolution")) {
 			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
 			FEATS = DATA + "SignalProcessingEmpty.txt.gz";
+
+		} else {
+			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
+			FEATS = DATA + CORPUS + ".txt.gz";
 		}
 
-		TAXONOMY = "taxonomy-" + CORPUS;
+		TAXONOMY = "taxonomies/taxonomy-" + CORPUS;
 
 		boolean runInitialization = false;
 		boolean runImport = false;
-		boolean runBuilder = false;
+		boolean runBuildHierarchy = false;
+		boolean runAddRelations = false;
+		boolean runExport = false;
 		boolean runLoop = true;
 
 		if (runInitialization)
-			createTaxonomy(CORPUS, TAXONOMY);
+			initialize(CORPUS, TAXONOMY);
 
-		if (runImport) {
-			Taxonomy tax = openTaxonomy(TAXONOMY);
-			try {
-				tax.importData(TERMS, FEATS);
-			} catch (IOException ex) {
-				Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }}
+		if (runImport)
+			importData(TAXONOMY, TERMS, FEATS);
 
-		if (runBuilder) {
-			try {
-				Taxonomy taxonomy = openTaxonomy(TAXONOMY);
-				taxonomy.buildTaxonomy();
-			} catch (IOException ex) {
-				Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }}
+		if (runBuildHierarchy)
+			buildHierarchy(TAXONOMY);
 
-		if (runLoop) {
-			Taxonomy taxonomy = openTaxonomy(TAXONOMY);
-			taxonomy.userLoop();
-		}
+		if (runAddRelations)
+			addRelations(TAXONOMY);
+
+		if (runExport)
+			exportSQL(TAXONOMY);
+
+		if (runLoop)
+			userLoop(TAXONOMY);
 	}
 
-	private static void createTaxonomy(String name, String location) {
+	private static void printUsage() {
+		System.out.println(
+				"\nUsage:\n\n" +
+				"$ java -jar TGistTaxonomy.jar --init <TAXONOMY_NAME> <TAXONOMY_DIR>\n\n" +
+				"    Initialize a taxonomy with name TAXONOMY_NAME in directory TAXONOMY_DIR\n\n" +
+				"$ java -jar TGistTaxonomy.jar --import <TAXONOMY_DIR> <TERMS_FILE> <FEATURES_FILE>\n\n" +
+				"    Import terms and features into the taxonomy in directory TAXONOMY_DIR\n\n" +
+				"$ java -jar TGistTaxonomy.jar --build <TAXONOMY_DIR>\n\n" +
+				"    Initialize a taxonomy with name TAXONOMY_NAME in directory TAXONOMY_DIR\n\n" +
+				"$ java -jar TGistTaxonomy.jar <TAXONOMY_DIR>\n\n" +
+				"    Initialize a taxonomy with name TAXONOMY_NAME in directory TAXONOMY_DIR\n\n");
+	}
+
+	private static void initialize(String name, String location) {
 		try {
 			Taxonomy tax = new Taxonomy(name, location);
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
 		}
+	}
+
+	private static void importData(String taxonomy, String terms, String features) {
+		Taxonomy tax = openTaxonomy(taxonomy);
+			try {
+				tax.importData(terms, features);
+			} catch (IOException ex) {
+				Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
+	}
+
+	private static void buildHierarchy(String taxonomyDir) {
+		try {
+			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
+			taxonomy.rhhr();
+		} catch (IOException ex) {
+			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
+	}
+
+	private static void addRelations(String taxonomyDir) {
+		try {
+			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
+			taxonomy.loadFeatures();
+			taxonomy.prettyPrint();
+			taxonomy.addRelations();
+		} catch (IOException ex) {
+			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
+	}
+
+	private static void	exportSQL(String taxonomyDir) {
+		try {
+			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
+			taxonomy.exportTables("exported_tables_" + taxonomy.name);
+		} catch (IOException ex) {
+			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }}
+
+	private static void userLoop(String taxonomyDir) {
+		Taxonomy taxonomy = openTaxonomy(taxonomyDir);
+		taxonomy.userLoop();
 	}
 
 	private static Taxonomy openTaxonomy(String name) {
