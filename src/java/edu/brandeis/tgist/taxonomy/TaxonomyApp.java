@@ -1,5 +1,6 @@
 package edu.brandeis.tgist.taxonomy;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,7 +32,7 @@ public class TaxonomyApp {
 
 		CORPUS = "SignalProcessing";
 		//CORPUS = "SignalProcessingResolution";
-		//CORPUS = "ComputerSciencePatents2007";
+		CORPUS = "ComputerSciencePatents2007";
 
 		if (CORPUS.equals("SignalProcessingResolution")) {
 			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
@@ -111,8 +112,10 @@ public class TaxonomyApp {
 		try {
 			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
 			taxonomy.loadFeatures();
-			taxonomy.prettyPrint();
-			taxonomy.addRelations();
+			System.out.println(taxonomy);
+			//taxonomy.prettyPrint();
+			//taxonomy.addRelations();
+			taxonomy.addRelationsNew();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
 	}
@@ -120,13 +123,17 @@ public class TaxonomyApp {
 	private static void	exportSQL(String taxonomyDir) {
 		try {
 			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
-			taxonomy.exportTables("exported_tables_" + taxonomy.name);
+			taxonomy.exportTables("exported_tables/" + taxonomy.name);
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }}
 
 	private static void userLoop(String taxonomyDir) {
-		Taxonomy taxonomy = openTaxonomy(taxonomyDir);
-		taxonomy.userLoop();
+		try {
+			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
+			taxonomy.userLoop();
+		} catch (FileNotFoundException ex) {
+			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
+		}
 	}
 
 	private static Taxonomy openTaxonomy(String name) {

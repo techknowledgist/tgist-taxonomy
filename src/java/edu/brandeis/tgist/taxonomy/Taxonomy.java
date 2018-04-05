@@ -121,6 +121,10 @@ public class Taxonomy {
 		String hFile = this.location + File.separator + HIERARCHY_FILE;
 		String rFile = this.location + File.separator + RELATIONS_FILE;
 
+		// This needs to be done to generate a feature index. It is ugly, but I
+		// don't know a better way.
+		FeatureVector.setFeatureIndexes();
+
 		TaxonomyLoader.loadTechnologies(tFile, this);
 		TaxonomyLoader.loadHierarchy(hFile, this);
 		TaxonomyLoader.loadRelations(rFile, this);
@@ -137,6 +141,21 @@ public class Taxonomy {
 		System.out.println(this);
 		for (int i = 0; i < 5 && i < this.features.size(); i++)
 			System.out.println("   " + this.features.get(i));
+	}
+
+	/**
+	 * Print the taxonomy's tree. Now the taxonomy is not yet a tree, but a forest
+	 * and this method is rather dumb because it ends up printing mini trees starting
+	 * from each technology (introducing a lot of duplicate fragments). Later it
+	 * will start printing at the top, at least, it will if we have single inheritance.
+	 *
+	 * This current version is here because I wanted to find a fragment with some
+	 * depth. One of the deepest I found was "greedy block coordinate descent algorithm".
+
+	 * @throws FileNotFoundException
+	 */
+	public void printHierarchyTree() throws FileNotFoundException, IOException {
+		TaxonomyWriter.writeHierarchyTree("hierachyTree.txt", this);
 	}
 
 	/**
@@ -208,11 +227,23 @@ public class Taxonomy {
 	 *
 	 * This code will be put in its own class.
 	 */
+
+	// TODO: this blows up big time when we get beyond abstracts. There is also
+	// something fishy about this code because I find it hard to understand. Do
+	// a complete make over.
+
 	void addRelations() throws IOException {
 		int relationCount = 0;
 		Map<String, List<Technology>> allTechs = groupTechnologiesByDocument();
+		int c = 0;
+		System.out.println("\nAdding relations to terms");
+		System.out.println(allTechs.size());
 		for (String fname : allTechs.keySet()) {
-			//System.out.println(fname);
+			c++;
+			if ((c % 10) == 0) {
+				System.out.println(c);
+				System.out.flush();
+			}
 			Object[] docTechs = allTechs.get(fname).toArray();
 			for (int i = 0; i < docTechs.length; i++) {
 				for (int j = i + 1; j < docTechs.length; j++) {
@@ -229,28 +260,96 @@ public class Taxonomy {
 				}
 			}
 		}
-		System.out.println(String.format("Created %d occurence relations", relationCount));
+
+		System.out.println(String.format(
+				"Occurence relations created (tokens) %,12d ", relationCount));
+		System.out.println(String.format(
+				"Occurence relations created (types)  %,12d", countRelations()));
+		filterRelations();
+		System.out.println(String.format(
+				"Types after filtering                %,12d", countRelations()));
+		File rFile = new File(this.location + File.separator + RELATIONS_FILE);
+		//TaxonomyWriter.writeRelations(rFile, this);
+	}
+
+	void addRelationsNew() throws IOException {
+
+		String relType = Relation.COOCCURENCE_RELATION;
+		int relationCount = 0;
+		System.out.println();
+		CooccurrenceWindow cw = new CooccurrenceWindow();
+		for (FeatureVector vector : this.features) {
+			cw.add(vector);
+			//System.out.println(cw);
+			ArrayList<String[]> pairs = cw.cooccurrencePairs();
+			for (String[] p : pairs) {
+				Technology t1 = this.technologies.get(p[0]);
+				Technology t2 = this.technologies.get(p[1]);
+				relationCount++;
+				relationCount++;
+				t1.addRelation(relType, t2);
+				t2.addRelation(relType, t1); }
+		}
+		System.out.println(String.format(
+				"Occurence relations created (tokens) %,12d ", relationCount));
+		System.out.println(String.format(
+				"Occurence relations created (types)  %,12d", countRelations()));
+		filterRelations();
+		System.out.println(String.format(
+				"Types after filtering                %,12d", countRelations()));
 		File rFile = new File(this.location + File.separator + RELATIONS_FILE);
 		TaxonomyWriter.writeRelations(rFile, this);
 	}
 
+	/**
+	 * Collect all technologies and group them by document name. This allows us
+	 * to collect relations between technologies on a document by document basis.
+	 *
+	 * @return A Map with Strings as keys and lists of Technology instances
+	 * as values.
+	 */
 	private	Map<String, List<Technology>> groupTechnologiesByDocument() {
-		//System.out.println(ObjectGraphMeasurer.measure(this.features));
-		//System.exit(0);
+		System.out.println("\nGrouping technologies");
+		CheckPoint checkpoint = new CheckPoint();
+		//checkpoint.showFootPrint("this.features", this.features);
+		checkpoint.reset();
 		Map<String, List<Technology>> groupedTechnologies;
 		groupedTechnologies = new HashMap<>();
+		int c = 0;
 		for (FeatureVector vector : this.features) {
+			c++;
+			if ((c % 100000) == 0) {
+				System.out.println(c);
+				System.out.flush(); }
+			// NOTE: a technology might occur mutliple times under a document
+			// TODO: should probably group the vectors and not the technologies
 			groupedTechnologies
 					.putIfAbsent(vector.fileName, new ArrayList<>());
 			groupedTechnologies
 					.get(vector.fileName)
 					.add(this.technologies.get(vector.term));
 		}
+		checkpoint.report("groupTechnologiesByDocument");
+		//checkpoint.showFootPrint("groupedTechnologies", groupedTechnologies);
+		//System.exit(0);
 		return groupedTechnologies;
 	}
 
-	void userLoop() {
+	void filterRelations() {
+		for (Technology technology : this.technologies.values()) {
+			technology.filterRelations(); }
+	}
+
+	int countRelations() {
+		int count = 0;
+		for (Technology technology : this.technologies.values())
+			count += technology.relations.size();
+		return count;
+	}
+
+	void userLoop() throws FileNotFoundException {
 		try (Scanner reader = new Scanner(System.in)) {
+			Map<Integer, String> mappings = new HashMap<>();
 			while (true) {
 				System.out.print("\nEnter a term: ");
 				String term = reader.nextLine();
@@ -259,41 +358,55 @@ public class Taxonomy {
 				// some abbreviations for debugging
 				if (term.equals("ga")) term = "genetic algorithm";
 				if (term.equals("aga")) term = "adaptive genetic algorithm";
+				if (term.equals("gr")) term = "greedy block coordinate descent algorithm";
+				if (term.matches("^\\d+$")) {
+					int idx = Integer.parseInt(term);
+					term = mappings.get(idx);
+				}
 				//System.out.println(String.format("[%s]", term));
 				Technology tech = this.technologies.get(term);
 				if (tech == null)
 					System.out.println("Not in taxonomy");
 				else
-					printFragment(tech);
+					mappings = printFragment(tech);
 			}
 		}
 	}
 
-	void printFragment(Technology tech) {
+	HashMap<Integer, String> printFragment(Technology tech) {
+		HashMap<Integer, String> mappings = new HashMap<>();
+		int idx = 0;
 		String hyphens = "-------------------------------------------------";
 		System.out.println("\n" + hyphens + "\n");
 		if (tech.hypernyms.isEmpty())
 			System.out.println("Top");
 		else {
-			for (Technology hyper : tech.hypernyms)
-				System.out.println(hyper.name); }
+			for (Technology hyper : tech.hypernyms) {
+				idx++;
+				mappings.put(idx, hyper.name);
+				System.out.println(String.format("[%d] %s", idx, hyper.name)); }}
 		System.out.println("  " + Node.BLUE + Node.BOLD + tech.name + Node.END);
 		int hypoCount = 0;
 		for (Technology hypo : tech.hyponyms) {
+			idx++;
+			mappings.put(idx, hypo.name);
 			hypoCount++;
-			if (hypoCount > 10) break;
-			System.out.println("    " + hypo.name);
+			//if (hypoCount > 10) break;
+			System.out.println(String.format("    [%d] %s", idx, hypo.name));
 		}
 		System.out.println("\n" + Node.UNDER + "Related terms:" + Node.END + "\n");
 		int relCount = 0;
 		for (String techName : tech.relations.keySet()) {
+			idx++;
 			relCount++;
-			if (relCount > 10) break;
+			if (relCount > 20) break;
 			Relation rel = tech.relations.get(techName);
 			String relTarget = rel.target.name;
-			System.out.println("    " + relTarget);
+			mappings.put(idx, relTarget);
+			System.out.println(String.format("    [%d] %s", idx, relTarget));
 		}
 		System.out.println("\n" + hyphens);
+		return mappings;
 	}
 
 	void exportTables(String outputDir) throws IOException {

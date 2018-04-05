@@ -4,7 +4,7 @@ public class Relation {
 
 	public static final String COOCCURENCE_RELATION = "coocc";
 
-	String type;
+	String relType;
 	int count;
 	Technology source, target;
 
@@ -18,14 +18,14 @@ public class Relation {
 	// field once we get more fields.
 
 	Relation(String type, Technology source, Technology target) {
-		this.type = type;
+		this.relType = type;
 		this.count = 1;
 		this.source = source;
 		this.target = target;
 	}
 
 	Relation(String relType, int count, Technology source, Technology target) {
-		this.type = type;
+		this.relType = relType;
 		this.count = count;
 		this.source = source;
 		this.target = target;
@@ -33,20 +33,18 @@ public class Relation {
 
 	@Override
 	public String toString() {
-		return String.format(
-				"<Relation %s : '%s' ==> '%s'>",
-				this.type, this.source.name, this.target.name);
+		return String.format("<Relation %s : '%s' ==> '%s'>",
+				this.relType, this.source.name, this.target.name);
 	}
 
 	public String asTabSeparatedString() {
-		return String.format(
-			"%s\t%s\t%s\n",
-			this.type, this.source.name, this.target.name);
+		return String.format("%s\t%s\t%s\n",
+			this.relType, this.source.name, this.target.name);
 	}
 
 	public String asTabSeparatedString(Technology technology) {
 		if (technology.name.equals(source.name)) {
-			return String.format("%s\t%d\t%s\n", this.type, this.count, this.target.name);
+			return String.format("%s\t%d\t%s\n", this.relType, this.count, this.target.name);
 		} else {
 			return asTabSeparatedString();
 		}

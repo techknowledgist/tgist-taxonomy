@@ -197,10 +197,6 @@ public class TaxonomyWriter {
 						StandardCharsets.UTF_8));
 	}
 
-	private static String quote(String text) {
-		return "\"" + text + "\"";
-	}
-
 	private static void insertStatementForHierarchyTable(
 			BufferedWriter writer, String currentTerm, String line)
 			throws IOException {
@@ -234,13 +230,34 @@ public class TaxonomyWriter {
 			BufferedWriter writer, String line)
 			throws IOException {
 
+		//System.out.println(line);
+		if (line.startsWith("\t")) return;
 		String[] fields = line.trim().split("\t");
+		String techName = quote(fields[0]);
+		if (techName.endsWith(" ")) return;
+		if (techName.contains("  ")) return;
+		if (techName.endsWith("^")) return;
 		String s = String.format(
 				"INSERT INTO technologies VALUES (%s, %s, %s);\n",
-				quote(fields[0]),	// name
-				fields[1],			// tscore
-				fields[2]);			// count
+				techName,		// name
+				fields[1],		// tscore
+				fields[2]);		// count
 		writer.write(s);
 	}
+
+	private static String quote(String text) {
+		text = text.replace("\\", "\\\\");
+		text = text.replace("\"", "\\\"");
+		return "\"" + text + "\"";
+	}
+
+	static void writeHierarchyTree(String outFile, Taxonomy taxonomy)
+			throws FileNotFoundException, IOException {
+		BufferedWriter writer = getWriter(outFile);
+		for (Technology technology : taxonomy.technologies.values()) {
+			technology.writeHierarchyFragment(writer, "");
+		}
+	}
+
 
 }

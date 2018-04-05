@@ -1,0 +1,75 @@
+<taxonomy.Taxonomy ComputerSciencePatents2007 terms=212097 features=50000>
+
+
+ORIGINAL
+
+Time elapsed = 808ms
+Memory use   = 175Mb
+
+Objects		 5,415,402
+References	 7,073,693 
+float 		    50,000 
+int 		 3,158,802 
+char 		24,464,251
+
+
+NOT USING featuresIdx
+BUT USING features
+
+Time elapsed = 596ms
+Memory use   =  67Mb
+
+Objects		 1,804,402
+References	 1,875,541
+int		   902,202
+char		14,100,305
+
+
+NOT USING features and featuresIdx
+
+Time elapsed = 659ms
+Memory use   =  14Mb
+
+Objects		   350,002
+References	   471,141
+char 		 3,034,159
+int	 	   200,002
+
+
+NOT USING features and featuresIdx
+BUT USING source field with input line
+
+Time elapsed = 657ms
+Memory use   =  45Mb
+
+Objects		   450,002
+References	   571,141
+char 		18,186,664
+int		   250,002
+
+
+
+APPROACH
+
+Use an Array String[] for the features, but only use the value. That is, we will use "14" instead of "doc_loc=14".
+
+Here is a count of features as used in the first 100K vectors of CS500:
+
+	doc_loc=50000		suffix3=32116
+	prev_VNP=3783		suffix4=21791
+	suffix5=14728		next2_tags=49788
+	next_n2=50000		next_n3=50000
+	prev_Npr=9845		prev_J=5244
+	section_loc=50000	prev_Jpr=1070
+	last_word=50000		plen=50000
+	first_word=45542		prev_n2=50000
+	sent_loc=50000		prev_n3=50000
+	tag_sig=50000		prev_V=18293
+
+These features would get positions 1-10 in the array, and the FeatureVector class would store for each string what the index in the feature array is. 
+
+Any other remaining features would be put in an overflow string:
+
+this.otherFeatures = "prev_VP=want_to_sleep another_Feature=asleep";
+
+We would clearly need to write some getters and also make sure that exporting and writing goes right.

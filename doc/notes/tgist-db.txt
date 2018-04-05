@@ -1,0 +1,143 @@
+
+TGist on batcaves.org
+----------------------------------------------------------------------------------------
+
+Created database (from cpanel)
+
+	batcave1_tgist_SignalProcessing
+
+	see schema at src/sql/www-schema.sql
+
+	One thing to note is that we need utf8
+		in MySQL, utf8 is not utf8, instead use utf8mb4
+		with that, we cannot do an index on a varchar255 field
+			instead use varchar250
+
+Created user (from cpanel)
+
+	batcave1_tgist/TGist0Terms
+
+Created tables with phpMyAdmin, see
+
+	batcave1_tgist_SignalProcessing.sql
+
+Log in from local ssh as follows:
+
+	$ mysql -p -u batcave1_tgist
+	mysql> use batcave1_tgist_SignalProcessing
+
+Loading tables
+
+	1. Use the exportTables() function in tgist-taxonomy
+
+	2. ftp to the server
+
+	   sftp batcave1@batcaves.org
+
+	3. data load
+
+	   $ mysql -p -u batcave1_tgist batcave1_tgist_SignalProcessing < technologies.sql
+	   $ mysql -p -u batcave1_tgist batcave1_tgist_SignalProcessing < hierarchy.sql
+	   $ mysql -p -u batcave1_tgist batcave1_tgist_SignalProcessing < relations.sql
+
+	   this is much faster than an import using phpMyAdmin
+	   (about 15 seconds for the signal processing corpus)
+
+
+
+Creating the same for CS 2007 patents
+
+
+1. Get the features from the corpus
+
+$ export CSPATENTS /home/j/corpuswork/fuse/FUSEData/corpora/lnus/ln-us-cs-500k
+$ python extract_features.py $CSPATENTS/subcorpora/2007 Patents-2007-ComputerScience.txt &
+$ python extract_features.py $CSPATENTS/subcorpora/2006 Patents-2006-ComputerScience.txt &
+
+For 2007, started this script at 21:50 on Friday.
+
+There are 9058 files. It should take about an hour.
+
+
+2. Initialize the taxonomy and import technologies and features
+
+There are 1.7M terms and 24M features.
+
+First ran this as
+
+$ java -jar dist/TGistTaxonomy.jar 
+	--import 
+	taxonomy-ComputerSciencePatents2007 
+	/DATA/techwatch/ComputerSciencePatents2007/classify.MaxEnt.out.s4.scores.sum.az.gz 
+	/DATA/techwatch/ComputerSciencePatents2007.txt.gz 
+
+This crawls down to a halt, speed it up and make it use a few minutes only (2 or 3) by increasing memory
+
+$ java -Xmx24g -Xms8g -jar dist/TGistTaxonomy.jar 
+	--import 
+	taxonomy-ComputerSciencePatents2007 
+	/DATA/techwatch/ComputerSciencePatents2007/classify.MaxEnt.out.s4.scores.sum.az.gz 
+	/DATA/techwatch/ComputerSciencePatents2007.txt.gz 
+
+However, it is perhaps not a good idea to keep the features in memory at any given time. At the moment, we cannot go past probably something like 30M features (that is, about 30M features in the file to import, which translates to about 5M features in the taxonomy). Need to change the code if we need more.
+
+Result is:
+	213K technologies (6.1M)
+	4.2M features (1.2G uncompressed, original file was 6G uncompressed)
+
+
+3. Building the taxonomy
+
+$ java -Xmx24g -Xms8g -jar dist/TGistTaxonomy.jar --build taxonomies-taxonomy-ComputerSciencePatents2007
+
+At first this was not feasible because of the dumb nature of the relation extraction, which used cooccurrence in the same document. That works fine for WoS abstracts but crashes on patents where we got something like half a billion cooccurrence relations.
+
+Relations code was changed so that instead of cooccurrence in document it used a sliding window a 2 technologies and calling those cooccurring. This will change to take sentence position into account. 
+
+With the new code we have the following measurements:
+
+	time elapsed:  110 seconds
+
+	memory use:    15 GB
+
+	relations found (tokens): 7.2M
+	relations found (types):  2.8M
+	after filtering:          1.5M	
+
+
+4. exporting to sql
+
+
+5. data load on server
+
+   $ mysql -p -u batcave1_tgist batcave1_tgist_ComputerSciencePatents2007 < technologies.sql
+   $ mysql -p -u batcave1_tgist batcave1_tgist_ComputerSciencePatents2007 < hierarchy.sql
+   $ mysql -p -u batcave1_tgist batcave1_tgist_ComputerSciencePatents2007 < relations.sql
+
+Duplicate field errors on technologies.sql:
+
+	f
+	y
+	naïve bayes (duplicate of naive bayes)	71071
+
+	ERROR 1062 (23000) at line 138927: Duplicate entry 't xk' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 164196: Duplicate entry 'noun phrase' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 164881: Duplicate entry 'linear feet' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 176921: Duplicate entry 'hinrich schutze' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 197899: Duplicate entry 'internet cafés' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 209726: Duplicate entry '\ \' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 211702: Duplicate entry 'fun games' for key 'PRIMARY'
+		(last two not due to accents)
+
+
+Other issues with technologies.sql
+
+ERROR 1064 (42000) at line 176114: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'javascript:urllinker(”ends with=“</a>", 0.932023, 2);
+
+
+NOTE: there is more to using utf8 then the scribble on top.
+
+	see https://mathiasbynens.be/notes/mysql-utf8mb4
+
+The other two gave no trouble.
+

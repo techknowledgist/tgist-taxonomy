@@ -72,14 +72,18 @@ public class TaxonomyLoader {
 			System.out.println("Reading features...");
 			FileInputStream inputStream = new FileInputStream(vFile);
 			Scanner sc = new Scanner(inputStream, "UTF-8");
+			CheckPoint checkpoint = new CheckPoint(true);
 			int c = 0;
 			while (sc.hasNextLine()) {
 				c++;
-				if ((c % 10000) == 0) System.out.println(c);
-				if (c > 50000) break;
+				//if ((c % 10000) == 0) System.out.println(".");
+				if ((c % 100000) == 0) System.out.println(String.format("%d", c));
+				//if (c > 100000) break;
 				String line = sc.nextLine();
 				taxonomy.features.add(new FeatureVector(line));
 			}
+			checkpoint.report("loadFeatures");
+			//System.out.println(FeatureVector.FEATS);
 		}
 	}
 
