@@ -51,7 +51,7 @@ public class Relation implements Comparable {
 	public Technology getTarget() {
 		return this.target;
 	}
-	
+
 	public String asTabSeparatedString() {
 		return String.format("%s\t%s\t%s\n",
 			this.relType, this.source.name, this.target.name);
@@ -59,7 +59,7 @@ public class Relation implements Comparable {
 
 	public String asTabSeparatedString(Technology technology) {
 		if (technology.name.equals(source.name)) {
-			return String.format("%s\t%d\t%.4f\t%s\n", 
+			return String.format("%s\t%d\t%.4f\t%s\n",
 					this.relType, this.count, this.mi, this.target.name);
 		} else {
 			return asTabSeparatedString();

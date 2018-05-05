@@ -12,23 +12,26 @@ public class TaxonomyApp {
 
 	public static void main(String[] args) {
 
-		boolean DEVELOP_MODE = true;
+		if (args.length > 0) {
+			if (args.length == 3 && args[0].equals("--init"))
+				initialize(args[1], args[2]);
+			else if (args.length == 4 && args[0].equals("--import"))
+				importData(args[1], args[2], args[3]);
+			else if (args.length == 2 && args[0].equals("--build-hierarchy"))
+				buildHierarchy(args[1]);
+			else if (args.length == 2 && args[0].equals("--add-relations"))
+				addRelations(args[1]);
+			else if (args.length == 1 )
+				userLoop(args[0]);
+			else
+				printUsage();
+		} else {
+			test(); }
+	}
 
-		if (args.length == 3 && args[0].equals("--init"))
-			initialize(args[1], args[2]);
-		else if (args.length == 4 && args[0].equals("--import"))
-			importData(args[1], args[2], args[3]);
-		else if (args.length == 2 && args[0].equals("--build-hierarchy"))
-			buildHierarchy(args[1]);
-		else if (args.length == 2 && args[0].equals("--add-relations"))
-			addRelations(args[1]);
-		else if (args.length == 1 )
-			userLoop(args[1]);
-		else if (! DEVELOP_MODE) {
-			printUsage();
-			System.exit(0); }
-
-		if (! DEVELOP_MODE) System.exit(0);
+	private static void test() {
+		// If there are no arguments then we are running this in develop mode
+		// where we define what to do right here in the code.
 
 		CORPUS = "SignalProcessing";
 		CORPUS = "ComputerSciencePatents2002";

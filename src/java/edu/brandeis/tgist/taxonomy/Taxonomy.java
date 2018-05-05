@@ -143,8 +143,8 @@ public class Taxonomy {
 	
 	@Override
 	public String toString() {
-		return String.format("<taxonomy.Taxonomy %s terms=%d features=%d>",
-				this.name, this.technologies.size(), this.features.size());
+		return String.format("<taxonomy.Taxonomy %s terms=%d relations=%d>",
+				this.name, this.technologies.size(), countRelations());
 	}
 
 	public void prettyPrint() {
@@ -352,7 +352,7 @@ public class Taxonomy {
 		int idx = 0;
 		String hyphens = "-------------------------------------------------";
 		System.out.println("\n" + hyphens + "\n");
-		System.out.println(Node.UNDER + tech.name.toUpperCase() + Node.END + "\n");
+		System.out.println(Node.BOLD + tech.name.toUpperCase() + Node.END + "\n");
 		System.out.println("Occurrences in dataset: " + tech.count + "\n");
 		if (tech.hypernyms.isEmpty())
 			System.out.println("Top");
