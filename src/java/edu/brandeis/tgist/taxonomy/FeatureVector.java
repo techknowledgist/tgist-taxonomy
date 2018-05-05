@@ -8,7 +8,7 @@ import java.util.Map;
 public class FeatureVector {
 
 	// just to get all features
-	static Map<String, Integer> FEATS = new HashMap<>();
+	// static Map<String, Integer> FEATS = new HashMap<>();
 	
 	static final String DOC_LOC = "doc_loc";
 	static final String SECTION_LOC = "section_loc";
@@ -20,10 +20,11 @@ public class FeatureVector {
 	static final String SUFFIX2 = "suffix3";
 	static final String SUFFIX3 = "suffix4";
 	static final String SUFFIX4 = "suffix4";
+	static final String SUFFIX5 = "suffix5";
 	static final String NEXT2_TAGS = "next2_tags";
 	static final String NEXT_N2 = "next_n2";
 	static final String NEXT_N3 = "next_n3";
-	static final String PREV_N2 = "pref_n2";
+	static final String PREV_N2 = "prev_n2";
 	static final String PREV_N3 = "prev_n3";
 	static final String PREV_NPR = "prev_Npr";
 	static final String PREV_VNP = "prev_VNP";
@@ -33,12 +34,13 @@ public class FeatureVector {
 
 	static final String[] FEAT_LIST = {
 		DOC_LOC, SECTION_LOC, SENT_LOC, PLEN, TAG_SIG, FIRST_WORD, LAST_WORD,
-		SUFFIX2, SUFFIX3, SUFFIX4, NEXT2_TAGS, NEXT_N2, NEXT_N3, PREV_N2, PREV_N3,
-		PREV_NPR, PREV_VNP, PREV_J, PREV_JPR, PREV_V };
+		SUFFIX2, SUFFIX3, SUFFIX4, SUFFIX5, NEXT2_TAGS, NEXT_N2, NEXT_N3,
+		PREV_N2, PREV_N3, PREV_NPR, PREV_VNP, PREV_J, PREV_JPR, PREV_V };
 	
 	static Map<String, Integer> FEAT_IDX = new HashMap<>();
 	
-
+	static { setFeatureIndex(); }
+	
 	String fileName;
 	String id;
 	String term;
@@ -57,10 +59,20 @@ public class FeatureVector {
 	 * the tag signature in a feature vector.
 	 */
 	Map<String, String> featuresIdx;
+	
+	// NOTE: this is for the array where we can find a feature because a feature
+	// has a fixed position
+	// TODO: figure out how to do the feature access, maybe some kind of lazy
+	// initialization of the index. Includes sorting out how we name all the fields.
+	String[] featureList;
+	
 
 	/**
-	 * Create a feature vector from a tab-separated line. The format of the line
-	 * is as follows:
+	 * Create a feature vector from a tab-separated line. The feature vector
+	 * will not have a feature index, instead, the features are simply stored as
+	 * an array.
+	 * 
+	 * The format of the line is as follows:
 	 *
 	 *    filename identifier year term feature+
 	 * 
@@ -70,6 +82,19 @@ public class FeatureVector {
 	 * @param line Tab-separated String.
 	 */
 	FeatureVector(String line) {
+		this(line, false);
+	}
+
+	/**
+	 * Create a feature vector from a tab-separated line. This is very similar to
+	 * FeatureVector(String line) except that here we add a flag that determines
+	 * whether the vector has a feature index.
+     * 
+	 * @param line Tab-separated String.
+	 * @param addIndex A boolean indicating whether to add an index.
+	 */
+	FeatureVector(String line, boolean addIndex) {
+		
 		String[] fields = line.split("\t");
 		this.fileName = fields[0];
 		this.id = fields[1];
@@ -77,16 +102,24 @@ public class FeatureVector {
 		this.term = fields[3];
 		//this.source = line;
 		this.features = Arrays.copyOfRange(fields, 4, fields.length);
-		this.featuresIdx = new HashMap<>();
+		if (addIndex) {
+			this.featuresIdx = new HashMap<>();
+			this.featureList = new String[FEAT_LIST.length]; }
 		for (String feat : this.features) {
 			String[] featval = feat.split("=", 2);
-			this.featuresIdx.put(featval[0], featval[1]);
-			int count = FEATS.getOrDefault(featval[0], 0);
-			FEATS.put(featval[0], count + 1);
+			if (addIndex) {
+				// this adds two kinds of indexes, the first the old map and the
+				// second a less memory-intensive array
+				// TODO: pick one of these, also having one of these makes the
+				//features field expendable
+				this.featuresIdx.put(featval[0], featval[1]);
+				this.featureList[FEAT_IDX.get(featval[0])] = featval[1]; }
+			//int count = FEATS.getOrDefault(featval[0], 0);
+			//FEATS.put(featval[0], count + 1);
 		}
 	}
 
-	static void setFeatureIndexes() {
+	static void setFeatureIndex() {
 		for (int i = 0; i < FEAT_LIST.length; i++)
 			FEAT_IDX.put(FEAT_LIST[i], i);
 		//System.out.println(FEAT_IDX);
@@ -104,4 +137,5 @@ public class FeatureVector {
 				this.fileName, this.id, this.year, this.term,
 				String.join("\t", this.features));
 	}
+
 }

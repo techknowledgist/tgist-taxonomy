@@ -3,9 +3,12 @@ package edu.brandeis.tgist.taxonomy;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import static java.lang.Math.log;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +49,7 @@ public class Taxonomy {
 	public static final String RELATIONS_FILE = "relations.txt";
 
 	/** The minimum technology score required for a term to be included. */
-	public static float TECHSCORE = 0.5f;
+	public static float TECHSCORE = 0.3f;
 
 	/** The minimum term count required for a term to be included. */
 	public static int MINCOUNT = 2;
@@ -76,6 +79,7 @@ public class Taxonomy {
 	 * @param taxonomyLocation Location of the taxonomy.
 	 * @throws java.io.IOException
 	 */
+	
 	public Taxonomy(String taxonomyName, String taxonomyLocation)
 			throws IOException {
 
@@ -99,12 +103,14 @@ public class Taxonomy {
 	}
 
 	/**
-	 * Open an existing taxonomy and load it into memory. This includes technologies,
-	 * features, the term hierarchy and the relations.
+	 * Open an existing taxonomy and load it into memory. This includes
+	 * technologies and the hierarchy. Features and the relations are not loaded
+	 * by this constructor.
 	 *
 	 * @param taxonomyLocation The location of the taxonomy.
 	 * @throws java.io.FileNotFoundException
 	 */
+	
 	public Taxonomy(String taxonomyLocation)
 			throws FileNotFoundException, IOException {
 
@@ -117,20 +123,24 @@ public class Taxonomy {
 		this.features = new ArrayList<>();
 
 		String tFile = this.location + File.separator + TECHNOLOGIES_FILE;
-		String vFile = this.location + File.separator + FEATURES_FILE;
 		String hFile = this.location + File.separator + HIERARCHY_FILE;
-		String rFile = this.location + File.separator + RELATIONS_FILE;
-
-		// This needs to be done to generate a feature index. It is ugly, but I
-		// don't know a better way.
-		FeatureVector.setFeatureIndexes();
-
 		TaxonomyLoader.loadTechnologies(tFile, this);
 		TaxonomyLoader.loadHierarchy(hFile, this);
-		TaxonomyLoader.loadRelations(rFile, this);
-
 	}
 
+	/**
+	 * Load relations into memory. This is done separately from initialization
+	 * because relations are not always needed and they can take a lot of time
+	 * to load.
+	 * 
+	 * @throws FileNotFoundException 
+	 */
+	
+	public void loadRelations() throws FileNotFoundException {
+		String rFile = this.location + File.separator + RELATIONS_FILE;
+		TaxonomyLoader.loadRelations(rFile, this);
+	}
+	
 	@Override
 	public String toString() {
 		return String.format("<taxonomy.Taxonomy %s terms=%d features=%d>",
@@ -154,6 +164,7 @@ public class Taxonomy {
 
 	 * @throws FileNotFoundException
 	 */
+	
 	public void printHierarchyTree() throws FileNotFoundException, IOException {
 		TaxonomyWriter.writeHierarchyTree("hierachyTree.txt", this);
 	}
@@ -167,17 +178,20 @@ public class Taxonomy {
 	 * tgist-features code (more specifically, by the extract_features.py script).
 	 *
 	 * @param termsFile
-	 * @param featuresFile
+	 * @param externalFeaturesFile
 	 * @throws IOException
 	 */
-	public void importData(String termsFile, String featuresFile)
+	
+	public void importData(String termsFile, String externalFeaturesFile)
 			throws IOException {
 
 		File tFile = new File(this.location + File.separator + TECHNOLOGIES_FILE);
 		File vFile = new File(this.location + File.separator + FEATURES_FILE);
 
+		CheckPoint cp = new CheckPoint(true);
 		TaxonomyLoader.importTechnologies(termsFile, this, TECHSCORE, MINCOUNT);
-		TaxonomyLoader.importFeatures(featuresFile, this);
+		TaxonomyLoader.importFeatures(externalFeaturesFile, this);
+		//cp.report("importData");
 		TaxonomyWriter.writeTechnologies(tFile, this.technologies);
 		TaxonomyWriter.writeFeatures(vFile, this.features);
 	}
@@ -187,6 +201,7 @@ public class Taxonomy {
 	 *
 	 * @throws FileNotFoundException
 	 */
+	
 	void loadFeatures() throws FileNotFoundException {
 		String vFile = this.location + File.separator + FEATURES_FILE;
 		TaxonomyLoader.loadFeatures(vFile, this);
@@ -198,6 +213,7 @@ public class Taxonomy {
 	 * appears as a IsaRelation on both t1 and t1. In addition, if isa(t1,t2) then
 	 * t1 is added as a hypernym to t2 and t2 is added as a hyponym to t1.
 	 */
+	
 	void rhhr() throws IOException {
 		Node top = new Node("Top");
 		int c = 0;
@@ -221,83 +237,39 @@ public class Taxonomy {
 	}
 
 	/**
-	 * Add relations to technologies in the ontology. For now, we have the
-	 * extremely simplistic approach that technologies are related if they occur
-	 * in the same document (that is, the same WoS abstract).
+	 * Add relations to technologies in the ontology. Creates a sliding window 
+	 * over the terms and stipulate that there is a cooccurrence relation if terms
+	 * cooccur in that window.
 	 *
 	 * This code will be put in its own class.
 	 */
-
-	// TODO: this blows up big time when we get beyond abstracts. There is also
-	// something fishy about this code because I find it hard to understand. Do
-	// a complete make over.
-
+	
 	void addRelations() throws IOException {
-		int relationCount = 0;
-		Map<String, List<Technology>> allTechs = groupTechnologiesByDocument();
-		int c = 0;
-		System.out.println("\nAdding relations to terms");
-		System.out.println(allTechs.size());
-		for (String fname : allTechs.keySet()) {
-			c++;
-			if ((c % 10) == 0) {
-				System.out.println(c);
-				System.out.flush();
-			}
-			Object[] docTechs = allTechs.get(fname).toArray();
-			for (int i = 0; i < docTechs.length; i++) {
-				for (int j = i + 1; j < docTechs.length; j++) {
-					Technology t1 = (Technology) docTechs[i];
-					Technology t2 = (Technology) docTechs[j];
-					if (t1.name.equals(t2.name))
-						continue;
-					// These are stored on both source and target technologies
-					// (as opposed to isa relations, which go only one way)
-					String relType = Relation.COOCCURENCE_RELATION;
-					relationCount++;
-					t1.addRelation(relType, t2);
-					t2.addRelation(relType, t1);
-				}
-			}
-		}
-
-		System.out.println(String.format(
-				"Occurence relations created (tokens) %,12d ", relationCount));
-		System.out.println(String.format(
-				"Occurence relations created (types)  %,12d", countRelations()));
-		filterRelations();
-		System.out.println(String.format(
-				"Types after filtering                %,12d", countRelations()));
-		File rFile = new File(this.location + File.separator + RELATIONS_FILE);
-		//TaxonomyWriter.writeRelations(rFile, this);
-	}
-
-	void addRelationsNew() throws IOException {
 
 		String relType = Relation.COOCCURENCE_RELATION;
 		int relationCount = 0;
 		System.out.println();
-		CooccurrenceWindow cw = new CooccurrenceWindow();
+		CooccurrenceWindow window = new CooccurrenceWindow();
 		for (FeatureVector vector : this.features) {
-			cw.add(vector);
-			//System.out.println(cw);
-			ArrayList<String[]> pairs = cw.cooccurrencePairs();
-			for (String[] p : pairs) {
+			window.update(vector);
+			for (String[] p : window.cooccurrencePairs()) {
 				Technology t1 = this.technologies.get(p[0]);
 				Technology t2 = this.technologies.get(p[1]);
 				relationCount++;
-				relationCount++;
+				// These are stored on both source and target technologies
+				// (as opposed to isa relations, which go only one way)
 				t1.addRelation(relType, t2);
 				t2.addRelation(relType, t1); }
 		}
 		System.out.println(String.format(
-				"Occurence relations created (tokens) %,12d ", relationCount));
+				"Occurence relations created (tokens) %,12d", relationCount));
 		System.out.println(String.format(
 				"Occurence relations created (types)  %,12d", countRelations()));
-		filterRelations();
-		System.out.println(String.format(
-				"Types after filtering                %,12d", countRelations()));
+		//filterRelations();
+		//System.out.println(String.format(
+		//		"Types after filtering                %,12d", countRelations()));
 		File rFile = new File(this.location + File.separator + RELATIONS_FILE);
+		calculateMutualInformation();
 		TaxonomyWriter.writeRelations(rFile, this);
 	}
 
@@ -308,6 +280,7 @@ public class Taxonomy {
 	 * @return A Map with Strings as keys and lists of Technology instances
 	 * as values.
 	 */
+	
 	private	Map<String, List<Technology>> groupTechnologiesByDocument() {
 		System.out.println("\nGrouping technologies");
 		CheckPoint checkpoint = new CheckPoint();
@@ -317,11 +290,12 @@ public class Taxonomy {
 		groupedTechnologies = new HashMap<>();
 		int c = 0;
 		for (FeatureVector vector : this.features) {
+			//System.out.println(vector);
 			c++;
 			if ((c % 100000) == 0) {
 				System.out.println(c);
 				System.out.flush(); }
-			// NOTE: a technology might occur mutliple times under a document
+			// NOTE: a technology might occur multiple times in a document
 			// TODO: should probably group the vectors and not the technologies
 			groupedTechnologies
 					.putIfAbsent(vector.fileName, new ArrayList<>());
@@ -378,6 +352,8 @@ public class Taxonomy {
 		int idx = 0;
 		String hyphens = "-------------------------------------------------";
 		System.out.println("\n" + hyphens + "\n");
+		System.out.println(Node.UNDER + tech.name.toUpperCase() + Node.END + "\n");
+		System.out.println("Occurrences in dataset: " + tech.count + "\n");
 		if (tech.hypernyms.isEmpty())
 			System.out.println("Top");
 		else {
@@ -395,16 +371,22 @@ public class Taxonomy {
 			System.out.println(String.format("    [%d] %s", idx, hypo.name));
 		}
 		System.out.println("\n" + Node.UNDER + "Related terms:" + Node.END + "\n");
+		
+		Collection<Relation> relations = tech.relations.values();
+		Object[] sortedRelations = relations.toArray();
+		Arrays.sort(sortedRelations);
+
 		int relCount = 0;
-		for (String techName : tech.relations.keySet()) {
+		for (Object obj : sortedRelations) {
 			idx++;
 			relCount++;
 			if (relCount > 20) break;
-			Relation rel = tech.relations.get(techName);
+			Relation rel = (Relation) obj;
 			String relTarget = rel.target.name;
-			mappings.put(idx, relTarget);
-			System.out.println(String.format("    [%d] %s", idx, relTarget));
+			mappings.put(idx, rel.target.name);
+			System.out.println(String.format("    [%d] %s", idx, rel.target.name));
 		}
+		
 		System.out.println("\n" + hyphens);
 		return mappings;
 	}
@@ -429,6 +411,38 @@ public class Taxonomy {
 	String sqlFile(String directory, String filename) {
 		String filebase = filename.substring(0, filename.lastIndexOf('.'));
 		return directory + File.separator + filebase + ".sql";
+	}
+
+	private void calculateMutualInformation() {
+		int n = this.technologies.size();
+		int c = 0;
+		for (Technology t1 : this.technologies.values()) {
+			c++;
+			if (c < 10) {
+				System.out.println();
+				System.out.println(t1); }
+			int c2 = 0;
+			for (String t2_name : t1.relations.keySet()) {
+				c2++;
+				Technology t2 = this.technologies.get(t2_name);
+				Relation rel = t1.relations.get(t2_name);
+				float mi = mutualInformation(n, t1, t2, rel);
+				rel.mi = mi;
+				if (c < 10) {
+					System.out.println(
+					String.format(
+							"   %f %d %d %d %s", 
+							mi, rel.count, t1.count, t2.count, t2.name)); 
+				}
+			}
+		}
+	}
+
+	private float mutualInformation(int n, Technology t1, Technology t2, Relation rel) {
+		float p_x_y = rel.count * 2 / (float) n;
+		float p_x = t1.count / (float) n;
+		float p_y = t2.count / (float) n;
+		return (float) log(p_x_y / (p_x * p_y));
 	}
 
 }

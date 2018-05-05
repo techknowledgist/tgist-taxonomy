@@ -67,12 +67,16 @@ public class TaxonomyWriter {
 			File vFile, List<FeatureVector> features)
 			throws IOException {
 
-		vFile.createNewFile();
-		try (OutputStreamWriter writer =
-				new OutputStreamWriter(
-					new FileOutputStream(vFile), StandardCharsets.UTF_8)) {
-			for (FeatureVector vector : features) {
-				writer.write(vector.asTabSeparatedFields());
+		// if the list is empty then we already wrote the features 
+		// TODO: this can probably be all removed
+		if (! features.isEmpty()) {
+			vFile.createNewFile();
+			try (OutputStreamWriter writer =
+					new OutputStreamWriter(
+						new FileOutputStream(vFile), StandardCharsets.UTF_8)) {
+				for (FeatureVector vector : features) {
+					writer.write(vector.asTabSeparatedFields());
+				}
 			}
 		}
 		System.out.println(String.format("Wrote features to %s", vFile));

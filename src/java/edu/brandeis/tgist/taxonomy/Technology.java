@@ -33,6 +33,13 @@ public class Technology {
 		return String.format(
 				"<term='%s' count=%d score=%f>", this.name, this.count, this.score);
 	}
+	
+	public void prettyPrint() {
+		System.out.println(this);
+		for (Relation rel : this.relations.values()) {
+			System.out.println("   " + rel);
+		}
+	}
 
 	public void addRelation(String relType, Technology tech) {
 		if (this.relations.containsKey(tech.name)) {
@@ -46,6 +53,13 @@ public class Technology {
 			this.relations.get(tech.name).count++;
 		} else {
 			this.relations.put(tech.name, new Relation(relType, count, this, tech)); }
+	}
+
+	public void addRelation(String relType, int count, float mi, Technology tech) {
+		if (this.relations.containsKey(tech.name)) {
+			this.relations.get(tech.name).count++;
+		} else {
+			this.relations.put(tech.name, new Relation(relType, count, mi, this, tech)); }
 	}
 
 	public String asTabSeparatedFields() {

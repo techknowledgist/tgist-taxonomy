@@ -31,19 +31,14 @@ public class TaxonomyApp {
 		if (! DEVELOP_MODE) System.exit(0);
 
 		CORPUS = "SignalProcessing";
-		//CORPUS = "SignalProcessingResolution";
+		CORPUS = "ComputerSciencePatents2002";
 		CORPUS = "ComputerSciencePatents2007";
-
-		if (CORPUS.equals("SignalProcessingResolution")) {
-			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
-			FEATS = DATA + "SignalProcessingEmpty.txt.gz";
-
-		} else {
-			TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
-			FEATS = DATA + CORPUS + ".txt.gz";
-		}
-
+		CORPUS = "Thyme";
+		
 		TAXONOMY = "taxonomies/taxonomy-" + CORPUS;
+
+		TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
+		FEATS = DATA + CORPUS + ".txt.gz";
 
 		boolean runInitialization = false;
 		boolean runImport = false;
@@ -78,10 +73,12 @@ public class TaxonomyApp {
 				"    Initialize a taxonomy with name TAXONOMY_NAME in directory TAXONOMY_DIR\n\n" +
 				"$ java -jar TGistTaxonomy.jar --import <TAXONOMY_DIR> <TERMS_FILE> <FEATURES_FILE>\n\n" +
 				"    Import terms and features into the taxonomy in directory TAXONOMY_DIR\n\n" +
-				"$ java -jar TGistTaxonomy.jar --build <TAXONOMY_DIR>\n\n" +
-				"    Initialize a taxonomy with name TAXONOMY_NAME in directory TAXONOMY_DIR\n\n" +
+				"$ java -jar TGistTaxonomy.jar --build-hierarchy <TAXONOMY_DIR>\n\n" +
+				"    Add ISA relations to the taxonomy in directory TAXONOMY_DIR\n\n" +
+				"$ java -jar TGistTaxonomy.jar --add-relations <TAXONOMY_DIR>\n\n" +
+				"    Add relations to the taxonomy in directory TAXONOMY_DIR\n\n" +
 				"$ java -jar TGistTaxonomy.jar <TAXONOMY_DIR>\n\n" +
-				"    Initialize a taxonomy with name TAXONOMY_NAME in directory TAXONOMY_DIR\n\n");
+				"    Enter the user loop on the taxonomy in directory TAXONOMY_DIR\n\n");
 	}
 
 	private static void initialize(String name, String location) {
@@ -93,11 +90,14 @@ public class TaxonomyApp {
 	}
 
 	private static void importData(String taxonomy, String terms, String features) {
+		System.out.println(taxonomy);
+		System.out.println(terms);
+		System.out.println(features);
 		Taxonomy tax = openTaxonomy(taxonomy);
-			try {
-				tax.importData(terms, features);
-			} catch (IOException ex) {
-				Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
+		try {
+			tax.importData(terms, features);
+		} catch (IOException ex) {
+			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
 	}
 
 	private static void buildHierarchy(String taxonomyDir) {
@@ -114,8 +114,7 @@ public class TaxonomyApp {
 			taxonomy.loadFeatures();
 			System.out.println(taxonomy);
 			//taxonomy.prettyPrint();
-			//taxonomy.addRelations();
-			taxonomy.addRelationsNew();
+			taxonomy.addRelations();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
 	}
@@ -123,6 +122,7 @@ public class TaxonomyApp {
 	private static void	exportSQL(String taxonomyDir) {
 		try {
 			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
+			taxonomy.loadRelations();
 			taxonomy.exportTables("exported_tables/" + taxonomy.name);
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }}
@@ -130,6 +130,8 @@ public class TaxonomyApp {
 	private static void userLoop(String taxonomyDir) {
 		try {
 			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
+			taxonomy.loadRelations();
+			taxonomy.prettyPrint();
 			taxonomy.userLoop();
 		} catch (FileNotFoundException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
@@ -140,7 +142,6 @@ public class TaxonomyApp {
 		Taxonomy taxonomy = null;
 		try {
 			taxonomy = new Taxonomy(name);
-			taxonomy.prettyPrint();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
 		}

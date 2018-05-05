@@ -45,7 +45,7 @@ Loading tables
 
 
 
-Creating the same for CS 2007 patents
+==> Creating the same for CS 2007 patents
 
 
 1. Get the features from the corpus
@@ -135,9 +135,138 @@ Other issues with technologies.sql
 ERROR 1064 (42000) at line 176114: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'javascript:urllinker(”ends with=“</a>", 0.932023, 2);
 
 
-NOTE: there is more to using utf8 then the scribble on top.
+NOTE: there is more to using utf8 than the scribble on top.
 
 	see https://mathiasbynens.be/notes/mysql-utf8mb4
 
 The other two gave no trouble.
 
+
+
+
+
+==> And now for the CS 2002 patents
+
+
+1. Get the features from the corpus
+
+$ setenv CSPATENTS /home/j/corpuswork/fuse/FUSEData/corpora/lnus/ln-us-cs-500k
+$ python extract_features.py $CSPATENTS/subcorpora/2002 Patents-2002-ComputerScience.txt &
+
+For 2002, started this script at 18:30 on Tuesday, took about 2.5 hours.
+
+There are 51,058 files. 
+
+2. Initialize the taxonomy and import technologies and features
+
+There are 5,878,347 terms and 119,281,676 features.
+
+
+$ java -Xmx24g -Xms8g -jar dist/TGistTaxonomy.jar 
+	--import 
+	taxonomy-ComputerSciencePatents2002 
+	/DATA/techwatch/ComputerSciencePatents2002/classify.MaxEnt.out.s4.scores.sum.az.gz 
+	/DATA/techwatch/ComputerSciencePatents2002.txt.gz 
+
+
+Using TECHSCORE=0.5f + MINCOUNT=2 ==> 1,206,211 technologies
+Using TECHSCORE=0.5f + MINCOUNT=3 ==>   508,878 technologies	did this one
+
+Import for features will not work because there are too many. Did introduce a more lightweight vector representation, which helped in the sense that instead of being able to deal with 30M feature vectors we can now go up to about 60M vectors (taking about 6 minutes and using 24GB of memory). But for this corpus we need 120M.
+
+What we need is for the import and any code that loops over the feature to just do the loop and not build a huge data structure.
+
+So did that...
+
+Processing takes about 6 minutes
+
+Result is:
+	   508,878  technologies (15Mb)
+	22,331,503  feature vectors (6.8Gb uncompressed)
+
+
+***
+
+
+3. Building the taxonomy
+
+$ java -Xmx24g -Xms8g -jar dist/TGistTaxonomy.jar --build-hierarchy taxonomies/taxonomy-ComputerSciencePatents2002
+
+Worked fine, except that there were a bunch of warnings like
+
+	WARNING: term 'tag  ' could not be inserted
+
+Result:
+
+	Created 114,780 isa relations
+
+
+$ java -Xmx24g -Xms8g -jar dist/TGistTaxonomy.jar --add-relations taxonomies/taxonomy-ComputerSciencePatents2002
+
+
+CODE NEEDS TO BE REWRITTEN TO NOT LOAD ALL FEATURES
+
+
+
+
+Results:
+
+	(currently the 2007 results)
+
+	time elapsed:  110 seconds
+
+	memory use:    15 GB
+
+	relations found (tokens): 7.2M
+	relations found (types):  2.8M
+	after filtering:          1.5M	
+
+
+3b. Adding the ACT types
+
+
+4. exporting to sql
+
+
+5. data load on server
+
+   $ mysql -p -u batcave1_tgist batcave1_tgist_ComputerSciencePatents2007 < technologies.sql
+   $ mysql -p -u batcave1_tgist batcave1_tgist_ComputerSciencePatents2007 < hierarchy.sql
+   $ mysql -p -u batcave1_tgist batcave1_tgist_ComputerSciencePatents2007 < relations.sql
+
+Duplicate field errors on technologies.sql:
+
+	f
+	y
+	naïve bayes (duplicate of naive bayes)	71071
+
+	ERROR 1062 (23000) at line 138927: Duplicate entry 't xk' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 164196: Duplicate entry 'noun phrase' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 164881: Duplicate entry 'linear feet' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 176921: Duplicate entry 'hinrich schutze' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 197899: Duplicate entry 'internet cafés' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 209726: Duplicate entry '\ \' for key 'PRIMARY'
+	ERROR 1062 (23000) at line 211702: Duplicate entry 'fun games' for key 'PRIMARY'
+		(last two not due to accents)
+
+
+Other issues with technologies.sql
+
+ERROR 1064 (42000) at line 176114: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'javascript:urllinker(”ends with=“</a>", 0.932023, 2);
+
+The other two gave no trouble.
+
+
+
+NOTE: there is more to using utf8 than the scribble on top, see: 
+
+https://mathiasbynens.be/notes/mysql-utf8mb4
+	
+https://stackoverflow.com/questions/29682197/exporting-importing-mysql-to-from-different-character-sets
+
+https://stackoverflow.com/questions/15119348/mysql-not-distinguishing-between-e-and-%C3%A9-using-jdbc?rq=1
+https://stackoverflow.com/questions/15119348/mysql-not-distinguishing-between-e-and-%C3%A9-using-jdbc
+
+http://board.phpbuilder.com/showthread.php?10344217-Difference-between-utf8_general_ci-and-utf8_bin
+
+https://www.linuxquestions.org/questions/linux-software-2/mysql-utf-8-and-accented-characters-785471/

@@ -34,7 +34,7 @@ public class TaxonomyLoader {
 			properties.load(fi); }
 		return properties;
 	}
-
+	
 	/**
 	 * Load the technologies from disk.
 	 *
@@ -80,7 +80,7 @@ public class TaxonomyLoader {
 				if ((c % 100000) == 0) System.out.println(String.format("%d", c));
 				//if (c > 100000) break;
 				String line = sc.nextLine();
-				taxonomy.features.add(new FeatureVector(line));
+				taxonomy.features.add(new FeatureVector(line, true));
 			}
 			checkpoint.report("loadFeatures");
 			//System.out.println(FeatureVector.FEATS);
@@ -139,10 +139,11 @@ public class TaxonomyLoader {
 					//System.out.println(fields[0]);
 					String reltype = fields[1];
 					int count = Integer.parseInt(fields[2]);
-					Technology target = taxonomy.technologies.get(fields[3]);
+					float mi = Float.parseFloat(fields[3]);
+					Technology target = taxonomy.technologies.get(fields[4]);
 					//System.out.println(line);
-					currentTechnology.addRelation(reltype, count, target);
-					target.addRelation(reltype, count, currentTechnology);
+					currentTechnology.addRelation(reltype, count, mi, target);
+					target.addRelation(reltype, count, mi, currentTechnology);
 					//Relation rel = new Relation(reltype, currentTechnology, target);
 					//currentTechnology.relations.add(rel);
 					//target.relations.add(rel);
@@ -151,7 +152,6 @@ public class TaxonomyLoader {
 		}
 	}
 
-
 	/**
 	 * Read and add technologies from a file with terms.
 	 *
@@ -159,6 +159,9 @@ public class TaxonomyLoader {
 	 * term count and the technology score. This file is external to the taxonomy
 	 * and the terms in the file will be added to the taxonomy if the terms meet
 	 * a few conditions on minimal frequency and minimal technology score.
+	 * 
+	 * This adds the technologies to the technologies field but does not save them
+	 * to disk, for the latter we use TaxonomyWriter.writeTechnologies().
 	 *
 	 * @param termsFile
 	 * @throws FileNotFoundException
@@ -195,31 +198,44 @@ public class TaxonomyLoader {
 	 * are added if the vector is for a term that occurs in the taxonomy as a
 	 * technology. The vectors are assumed to be in a gzipped file.
 	 *
+	 * Unlike importTechnologies(), this method does not save the loaded data in
+	 * a local field, instead it writes the vectors it wants to keep immediately
+	 * to the disk. This is because for larger corpora the list of features gets
+	 * to be too large to keep in memory.
+	 * 
 	 * @param featuresFile
 	 * @throws IOException
 	 */
 	static void importFeatures(String featuresFile, Taxonomy taxonomy) throws IOException {
 
 		BufferedReader buffered = getGzipReader(featuresFile);
+		String fFile = taxonomy.location + File.separator + Taxonomy.FEATURES_FILE;
+		System.out.println(fFile);
+		FeatureWriter fWriter = new FeatureWriter(new File(fFile));
 		String line;
 		String filename = null; //, year = null, term = null;
 		int c = 0;
+		int vectorsAdded = 0;
 		while ((line = buffered.readLine()) != null) {
 			c++;
-			if ((c % 10000) == 0) System.out.println(c);
-			//if (c > 100_000) break;
+			if ((c % 100_000) == 0) System.out.println(c);
+			//if (c > 1_000_000) break;
 			String[] fields = line.split("\t");
 			if ("".equals(fields[0])) {
 				String term = fields[3];
 				if (taxonomy.technologies.containsKey(term)) {
-					// prepend the full filename because the vector initialization
+					// prefix the full filename because the vector initialization
 					// code expects that
-					taxonomy.features.add(new FeatureVector(filename + line)); }
+					FeatureVector vector = new FeatureVector(filename + line);
+					fWriter.write(vector.asTabSeparatedFields());
+					vectorsAdded++;
+				}
 			} else {
 				filename = fields[0];
 			}
 		}
-		System.out.println(String.format("Imported %d vectors", taxonomy.features.size()));
+		fWriter.close();
+		System.out.println(String.format("Imported %d vectors", vectorsAdded));
 	}
 
 	/**
@@ -238,6 +254,5 @@ public class TaxonomyLoader {
 		BufferedReader reader = new BufferedReader(decoder);
 		return reader;
 	}
-
 
 }

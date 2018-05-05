@@ -26,14 +26,14 @@ public class CooccurrenceWindow {
 	 *
 	 * @param vector The FeatureVector to add.
 	 */
-	public void add(FeatureVector vector) {
+	public void update(FeatureVector vector) {
 		this.vectors.add(vector);
 		adjustLeft(vector);
 	}
 
 	/**
 	 * Given the vector just added, determine what elements on the left now fall
-	 * outside of the window. This now simply uses a sliding window of three terms
+	 * outside of the window. This now simply uses a sliding window of two terms
 	 * and what the last vector is does not matter, but in time we will look at
 	 * the sentence offsets of the vectors.
 	 *
