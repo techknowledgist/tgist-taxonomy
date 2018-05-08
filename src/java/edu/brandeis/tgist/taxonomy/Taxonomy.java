@@ -49,7 +49,7 @@ public class Taxonomy {
 	public static final String RELATIONS_FILE = "relations.txt";
 
 	/** The minimum technology score required for a term to be included. */
-	public static float TECHSCORE = 0.3f;
+	public static float TECHSCORE = 0.5f;
 
 	/** The minimum term count required for a term to be included. */
 	public static int MINCOUNT = 2;
@@ -79,7 +79,7 @@ public class Taxonomy {
 	 * @param taxonomyLocation Location of the taxonomy.
 	 * @throws java.io.IOException
 	 */
-	
+
 	public Taxonomy(String taxonomyName, String taxonomyLocation)
 			throws IOException {
 
@@ -110,7 +110,7 @@ public class Taxonomy {
 	 * @param taxonomyLocation The location of the taxonomy.
 	 * @throws java.io.FileNotFoundException
 	 */
-	
+
 	public Taxonomy(String taxonomyLocation)
 			throws FileNotFoundException, IOException {
 
@@ -132,15 +132,15 @@ public class Taxonomy {
 	 * Load relations into memory. This is done separately from initialization
 	 * because relations are not always needed and they can take a lot of time
 	 * to load.
-	 * 
-	 * @throws FileNotFoundException 
+	 *
+	 * @throws FileNotFoundException
 	 */
-	
+
 	public void loadRelations() throws FileNotFoundException {
 		String rFile = this.location + File.separator + RELATIONS_FILE;
 		TaxonomyLoader.loadRelations(rFile, this);
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format("<taxonomy.Taxonomy %s terms=%d relations=%d>",
@@ -164,7 +164,7 @@ public class Taxonomy {
 
 	 * @throws FileNotFoundException
 	 */
-	
+
 	public void printHierarchyTree() throws FileNotFoundException, IOException {
 		TaxonomyWriter.writeHierarchyTree("hierachyTree.txt", this);
 	}
@@ -181,7 +181,7 @@ public class Taxonomy {
 	 * @param externalFeaturesFile
 	 * @throws IOException
 	 */
-	
+
 	public void importData(String termsFile, String externalFeaturesFile)
 			throws IOException {
 
@@ -201,7 +201,7 @@ public class Taxonomy {
 	 *
 	 * @throws FileNotFoundException
 	 */
-	
+
 	void loadFeatures() throws FileNotFoundException {
 		String vFile = this.location + File.separator + FEATURES_FILE;
 		TaxonomyLoader.loadFeatures(vFile, this);
@@ -213,7 +213,7 @@ public class Taxonomy {
 	 * appears as a IsaRelation on both t1 and t1. In addition, if isa(t1,t2) then
 	 * t1 is added as a hypernym to t2 and t2 is added as a hyponym to t1.
 	 */
-	
+
 	void rhhr() throws IOException {
 		Node top = new Node("Top");
 		int c = 0;
@@ -237,13 +237,13 @@ public class Taxonomy {
 	}
 
 	/**
-	 * Add relations to technologies in the ontology. Creates a sliding window 
+	 * Add relations to technologies in the ontology. Creates a sliding window
 	 * over the terms and stipulate that there is a cooccurrence relation if terms
 	 * cooccur in that window.
 	 *
 	 * This code will be put in its own class.
 	 */
-	
+
 	void addRelations() throws IOException {
 
 		String relType = Relation.COOCCURENCE_RELATION;
@@ -280,7 +280,7 @@ public class Taxonomy {
 	 * @return A Map with Strings as keys and lists of Technology instances
 	 * as values.
 	 */
-	
+
 	private	Map<String, List<Technology>> groupTechnologiesByDocument() {
 		System.out.println("\nGrouping technologies");
 		CheckPoint checkpoint = new CheckPoint();
@@ -371,7 +371,7 @@ public class Taxonomy {
 			System.out.println(String.format("    [%d] %s", idx, hypo.name));
 		}
 		System.out.println("\n" + Node.UNDER + "Related terms:" + Node.END + "\n");
-		
+
 		Collection<Relation> relations = tech.relations.values();
 		Object[] sortedRelations = relations.toArray();
 		Arrays.sort(sortedRelations);
@@ -386,7 +386,7 @@ public class Taxonomy {
 			mappings.put(idx, rel.target.name);
 			System.out.println(String.format("    [%d] %s", idx, rel.target.name));
 		}
-		
+
 		System.out.println("\n" + hyphens);
 		return mappings;
 	}
@@ -431,8 +431,8 @@ public class Taxonomy {
 				if (c < 10) {
 					System.out.println(
 					String.format(
-							"   %f %d %d %d %s", 
-							mi, rel.count, t1.count, t2.count, t2.name)); 
+							"   %f %d %d %d %s",
+							mi, rel.count, t1.count, t2.count, t2.name));
 				}
 			}
 		}

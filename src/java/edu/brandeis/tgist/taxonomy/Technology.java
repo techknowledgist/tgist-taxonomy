@@ -33,7 +33,7 @@ public class Technology {
 		return String.format(
 				"<term='%s' count=%d score=%f>", this.name, this.count, this.score);
 	}
-	
+
 	public void prettyPrint() {
 		System.out.println(this);
 		for (Relation rel : this.relations.values()) {

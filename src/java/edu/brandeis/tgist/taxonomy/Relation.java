@@ -9,15 +9,6 @@ public class Relation implements Comparable {
 	float mi;
 	Technology source, target;
 
-	// TODO: might have something here like the strength of the relation (that is,
-	// the number of occurrences). So if t1 and t2 are in the same abstract 5 times
-	// then the strength would be 5 (instead of raw count we could also use
-	// relative count or mutual information or whatnot)
-
-	// TODO: we now have a limited number of fields, should perhaps make sure that
-	// when we print we do sth like count=3 so we can enter those into the righ
-	// field once we get more fields.
-
 	Relation(String type, Technology source, Technology target) {
 		this.relType = type;
 		this.count = 1;
