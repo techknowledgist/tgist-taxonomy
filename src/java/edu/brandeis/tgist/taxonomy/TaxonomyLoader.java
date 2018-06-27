@@ -34,7 +34,7 @@ public class TaxonomyLoader {
 			properties.load(fi); }
 		return properties;
 	}
-	
+
 	/**
 	 * Load the technologies from disk.
 	 *
@@ -58,6 +58,25 @@ public class TaxonomyLoader {
 			}
 		}
 	}
+
+
+	static void loadACT(String aFile, Taxonomy taxonomy) throws FileNotFoundException {
+
+		if (new File(aFile).isFile()) {
+			System.out.println("Reading ACT terms...");
+			FileInputStream inputStream = new FileInputStream(aFile);
+			Scanner sc = new Scanner(inputStream, "UTF-8");
+			while (sc.hasNextLine()) {
+				String line = sc.nextLine();
+				String[] fields = line.split("\t");
+				String term = fields[0];
+				Technology technology = taxonomy.technologies.get(term);
+				taxonomy.acts.add(technology);
+			}
+		}
+
+	}
+
 
 	/**
 	 * Load the feature vectors from disk.
@@ -159,7 +178,7 @@ public class TaxonomyLoader {
 	 * term count and the technology score. This file is external to the taxonomy
 	 * and the terms in the file will be added to the taxonomy if the terms meet
 	 * a few conditions on minimal frequency and minimal technology score.
-	 * 
+	 *
 	 * This adds the technologies to the technologies field but does not save them
 	 * to disk, for the latter we use TaxonomyWriter.writeTechnologies().
 	 *
@@ -191,6 +210,45 @@ public class TaxonomyLoader {
 	}
 
 	/**
+	 *
+	 * @param actsFile
+	 * @param taxonomy
+	 * @param minTechScore
+	 * @param minCount
+	 * @throws FileNotFoundException
+	 * @throws UnsupportedEncodingException
+	 * @throws IOException
+	 */
+
+	static void importACTS(
+			String actsFile, Taxonomy taxonomy)
+			throws FileNotFoundException, UnsupportedEncodingException, IOException {
+
+		FileInputStream fileStream = new FileInputStream(actsFile);
+		Reader decoder = new InputStreamReader(fileStream, StandardCharsets.UTF_8);
+		BufferedReader reader = new BufferedReader(decoder);
+		String line;
+		int c = 0;
+		while ((line = reader.readLine()) != null) {
+			String[] fields = line.split("\t");
+			String term = fields[0].replace('_', ' ');
+			String act = fields[1];
+			//System.out.println(term);
+			Technology technology = taxonomy.technologies.get(term);
+			if (technology == null)
+				continue;
+			// we take them all right now since with these data we do not have enough
+			// technologies that qualify as a task
+			// if (act.equals("t")) {
+			c++;
+			taxonomy.acts.add(technology);
+			//System.out.println(act + technology);
+		}
+		System.out.println(
+				String.format("Imported %d ACT classes", c));
+	}
+
+	/**
 	 * Read and add feature vectors.
 	 *
 	 * Only read the vectors for terms that occur in the technologies map. The
@@ -202,7 +260,7 @@ public class TaxonomyLoader {
 	 * a local field, instead it writes the vectors it wants to keep immediately
 	 * to the disk. This is because for larger corpora the list of features gets
 	 * to be too large to keep in memory.
-	 * 
+	 *
 	 * @param featuresFile
 	 * @throws IOException
 	 */

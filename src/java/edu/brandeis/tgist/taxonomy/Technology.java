@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Technology {
+public class Technology implements Comparable {
 
 	String name;
 	int count;
@@ -33,6 +33,25 @@ public class Technology {
 		return String.format(
 				"<term='%s' count=%d score=%f>", this.name, this.count, this.score);
 	}
+
+	/**
+	 *
+	 * @param t
+	 * @return
+	 */
+//	@Override
+//	public int compareTo(Technology t) {
+//		return this.name.compareTo(t.name);
+//	}
+
+	@Override
+	public int compareTo(Object o) {
+		Technology t = (Technology) o;
+		if (this.count < t.count) return 1;
+		else if (this.count > t.count) return -1;
+		return 0;
+	}
+
 
 	public void prettyPrint() {
 		System.out.println(this);

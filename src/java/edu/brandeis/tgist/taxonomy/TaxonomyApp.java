@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 public class TaxonomyApp {
 
 	static String DATA = "/DATA/techwatch/";
-	static String CORPUS, TERMS, FEATS, TAXONOMY;
+	static String CORPUS, TERMS, ACTS, FEATS, TAXONOMY;
 
 	static String COMMAND = "$ java -jar TGistTaxonomy.jar";
 	static String USAGE =
@@ -32,7 +32,7 @@ public class TaxonomyApp {
 			if (args.length == 3 && args[0].equals("--init"))
 				initialize(args[1], args[2]);
 			else if (args.length == 4 && args[0].equals("--import"))
-				importData(args[1], args[2], args[3]);
+				importData(args[1], args[2], args[3], args[4]);
 			else if (args.length == 2 && args[0].equals("--build-hierarchy"))
 				buildHierarchy(args[1]);
 			else if (args.length == 2 && args[0].equals("--add-relations"))
@@ -69,12 +69,13 @@ public class TaxonomyApp {
 		CORPUS = "SignalProcessing";
 		//CORPUS = "ComputerSciencePatents2002";
 		//CORPUS = "ComputerSciencePatents2007";
-		CORPUS = "Thyme";
+		//CORPUS = "Thyme";
 
 		TAXONOMY = "taxonomies/taxonomy-" + CORPUS;
 
 		TERMS = DATA + CORPUS + "/classify.MaxEnt.out.s4.scores.sum.az";
 		FEATS = DATA + CORPUS + ".txt.gz";
+		ACTS = DATA + CORPUS + "/NB.IG50.test1.woc.9999.results.classes";
 
 		boolean runInitialization = false;
 		boolean runImport = false;
@@ -87,7 +88,7 @@ public class TaxonomyApp {
 			initialize(CORPUS, TAXONOMY);
 
 		if (runImport)
-			importData(TAXONOMY, TERMS, FEATS);
+			importData(TAXONOMY, TERMS, ACTS, FEATS);
 
 		if (runBuildHierarchy)
 			buildHierarchy(TAXONOMY);
@@ -118,13 +119,14 @@ public class TaxonomyApp {
 		}
 	}
 
-	private static void importData(String taxonomy, String terms, String features) {
+	private static void importData(String taxonomy, String terms, String acts, String features) {
 		System.out.println(taxonomy);
 		System.out.println(terms);
+		System.out.println(acts);
 		System.out.println(features);
 		Taxonomy tax = openTaxonomy(taxonomy);
 		try {
-			tax.importData(terms, features);
+			tax.importData(terms, acts, features);
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
 	}

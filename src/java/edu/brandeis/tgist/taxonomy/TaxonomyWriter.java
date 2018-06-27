@@ -57,6 +57,29 @@ public class TaxonomyWriter {
 	}
 
 	/**
+	 * Write ACT terms to disk.
+	 *
+	 * Just writes the name of the term and nothing else.
+	 *
+	 * @param aFile
+	 * @param acts
+	 * @throws IOException
+	 */
+	static void writeACT(
+			File aFile, List<Technology> acts)
+			throws IOException {
+		aFile.createNewFile();
+		try (OutputStreamWriter writer =
+				new OutputStreamWriter(
+					new FileOutputStream(aFile), StandardCharsets.UTF_8)) {
+			for (Technology technology : acts) {
+				writer.write(technology.name + "\n");
+			}
+		}
+		System.out.println(String.format("Wrote ACT terms to %s", aFile));
+	}
+
+	/**
 	 * Write feature vectors to disk.
 	 *
 	 * @param vFile  The File to write to.
@@ -67,7 +90,7 @@ public class TaxonomyWriter {
 			File vFile, List<FeatureVector> features)
 			throws IOException {
 
-		// if the list is empty then we already wrote the features 
+		// if the list is empty then we already wrote the features
 		// TODO: this can probably be all removed
 		if (! features.isEmpty()) {
 			vFile.createNewFile();

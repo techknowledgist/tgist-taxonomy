@@ -42,6 +42,9 @@ public class Taxonomy {
 	/** The name of the file that stores the technology terms. */
 	public static final String TECHNOLOGIES_FILE = "technologies.txt";
 
+	/** The name of the file that stores the ACT terms. */
+	public static final String ACT_FILE = "act.txt";
+
 	/** The name of the file that stores the hierarchical relations. */
 	public static final String HIERARCHY_FILE = "hierarchy.txt";
 
@@ -57,9 +60,13 @@ public class Taxonomy {
 	// TODO: allow changing TECHSCORE and MINCOUNT in the calling method and add
 	// the values chosen to the properties file
 
+	/** Number of terms to display on the splash screen. */
+	public static int ACT_TERMS = 25;
+
 	public String name;
 	public String location;
 	public HashMap<String, Technology> technologies;
+	public List<Technology> acts;
 	public List<FeatureVector> features;
 
 	/**
@@ -104,8 +111,8 @@ public class Taxonomy {
 
 	/**
 	 * Open an existing taxonomy and load it into memory. This includes
-	 * technologies and the hierarchy. Features and the relations are not loaded
-	 * by this constructor.
+	 * technologies, ACT terms and the hierarchy. Features and the relations
+	 * are not loaded by this constructor.
 	 *
 	 * @param taxonomyLocation The location of the taxonomy.
 	 * @throws java.io.FileNotFoundException
@@ -120,11 +127,14 @@ public class Taxonomy {
 		this.name = properties.getProperty("name");
 		this.location = taxonomyLocation;
 		this.technologies = new HashMap<>();
+		this.acts = new ArrayList<>();
 		this.features = new ArrayList<>();
 
 		String tFile = this.location + File.separator + TECHNOLOGIES_FILE;
+		String aFile = this.location + File.separator + ACT_FILE;
 		String hFile = this.location + File.separator + HIERARCHY_FILE;
 		TaxonomyLoader.loadTechnologies(tFile, this);
+		TaxonomyLoader.loadACT(aFile, this);
 		TaxonomyLoader.loadHierarchy(hFile, this);
 	}
 
@@ -139,6 +149,13 @@ public class Taxonomy {
 	public void loadRelations() throws FileNotFoundException {
 		String rFile = this.location + File.separator + RELATIONS_FILE;
 		TaxonomyLoader.loadRelations(rFile, this);
+	}
+
+	public Object[] getActTerms() {
+		List<Technology> terms = this.acts;
+		Object[] terms2 = terms.toArray();
+		Arrays.sort(terms2);
+		return terms2.length <= ACT_TERMS ? terms2 : Arrays.copyOfRange(terms2, 0, ACT_TERMS);
 	}
 
 	@Override
@@ -182,17 +199,20 @@ public class Taxonomy {
 	 * @throws IOException
 	 */
 
-	public void importData(String termsFile, String externalFeaturesFile)
+	public void importData(String termsFile, String actsFile, String externalFeaturesFile)
 			throws IOException {
 
 		File tFile = new File(this.location + File.separator + TECHNOLOGIES_FILE);
+		File aFile = new File(this.location + File.separator + ACT_FILE);
 		File vFile = new File(this.location + File.separator + FEATURES_FILE);
 
 		CheckPoint cp = new CheckPoint(true);
 		TaxonomyLoader.importTechnologies(termsFile, this, TECHSCORE, MINCOUNT);
+		TaxonomyLoader.importACTS(actsFile, this);
 		TaxonomyLoader.importFeatures(externalFeaturesFile, this);
 		//cp.report("importData");
 		TaxonomyWriter.writeTechnologies(tFile, this.technologies);
+		TaxonomyWriter.writeACT(aFile, this.acts);
 		TaxonomyWriter.writeFeatures(vFile, this.features);
 	}
 
@@ -322,13 +342,20 @@ public class Taxonomy {
 	}
 
 	void userLoop() throws FileNotFoundException {
+		String term = null;
 		try (Scanner reader = new Scanner(System.in)) {
 			Map<Integer, String> mappings = new HashMap<>();
 			while (true) {
-				System.out.print("\nEnter a term: ");
-				String term = reader.nextLine();
+				if (term == null) {
+					mappings = printFlashScreen();
+				}
+				System.out.print("\n>>> ");
+				term = reader.nextLine();
 				if (term.equals("q"))
 					break;
+				if (term.equals("h")) {
+					term = null;
+					continue; }
 				// some abbreviations for debugging
 				if (term.equals("ga")) term = "genetic algorithm";
 				if (term.equals("aga")) term = "adaptive genetic algorithm";
@@ -345,6 +372,21 @@ public class Taxonomy {
 					mappings = printFragment(tech);
 			}
 		}
+	}
+
+	HashMap<Integer, String> printFlashScreen() {
+		HashMap<Integer, String> mappings = new HashMap<>();
+		int idx = 0;
+		System.out.print(
+				String.format("\n%s%s Corpus%s\n\n", Node.BOLD, this.name, Node.END));
+		Object[] actTerms = this.getActTerms();
+		for (Object technology : actTerms) {
+			idx++;
+			Technology t2 = (Technology) technology;
+			mappings.put(idx, t2.name);
+			System.out.print(String.format("[%d] %s", idx, t2.name + "\n"));
+		}
+		return mappings;
 	}
 
 	HashMap<Integer, String> printFragment(Technology tech) {

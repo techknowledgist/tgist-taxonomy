@@ -261,7 +261,9 @@ The other two gave no trouble.
 NOTE: there is more to using utf8 than the scribble on top, see: 
 
 https://mathiasbynens.be/notes/mysql-utf8mb4
-	
+
+https://dev.mysql.com/doc/refman/5.5/en/charset-unicode-conversion.html
+
 https://stackoverflow.com/questions/29682197/exporting-importing-mysql-to-from-different-character-sets
 
 https://stackoverflow.com/questions/15119348/mysql-not-distinguishing-between-e-and-%C3%A9-using-jdbc?rq=1
