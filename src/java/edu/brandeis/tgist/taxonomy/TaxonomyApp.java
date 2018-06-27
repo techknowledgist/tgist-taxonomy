@@ -64,7 +64,7 @@ public class TaxonomyApp {
 				value("taxonomy-name"),
 				value("taxonomy-directory"));
 		System.out.println(message);
-		printUsage();
+		//printUsage();
 
 		CORPUS = "SignalProcessing";
 		//CORPUS = "ComputerSciencePatents2002";

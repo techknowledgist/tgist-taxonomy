@@ -59,7 +59,6 @@ public class TaxonomyLoader {
 		}
 	}
 
-
 	static void loadACT(String aFile, Taxonomy taxonomy) throws FileNotFoundException {
 
 		if (new File(aFile).isFile()) {
@@ -76,7 +75,6 @@ public class TaxonomyLoader {
 		}
 
 	}
-
 
 	/**
 	 * Load the feature vectors from disk.
@@ -95,9 +93,8 @@ public class TaxonomyLoader {
 			int c = 0;
 			while (sc.hasNextLine()) {
 				c++;
-				//if ((c % 10000) == 0) System.out.println(".");
+				//if (c > 1000) break;
 				if ((c % 100000) == 0) System.out.println(String.format("%d", c));
-				//if (c > 100000) break;
 				String line = sc.nextLine();
 				taxonomy.features.add(new FeatureVector(line, true));
 			}
@@ -142,10 +139,10 @@ public class TaxonomyLoader {
 		}
 	}
 
-	static void loadRelations(String rFile, Taxonomy taxonomy) throws FileNotFoundException {
-		if (new File(rFile).isFile()) {
-			System.out.println("Reading relations...");
-			FileInputStream inputStream = new FileInputStream(rFile);
+	static void loadCooccurrenceRelations(String crFile, Taxonomy taxonomy) throws FileNotFoundException {
+		if (new File(crFile).isFile()) {
+			System.out.println("Reading cooccurrence relations...");
+			FileInputStream inputStream = new FileInputStream(crFile);
 			Scanner sc = new Scanner(inputStream, "UTF-8");
 			Technology currentTechnology = null;
 			while (sc.hasNextLine()) {
@@ -161,12 +158,33 @@ public class TaxonomyLoader {
 					float mi = Float.parseFloat(fields[3]);
 					Technology target = taxonomy.technologies.get(fields[4]);
 					//System.out.println(line);
-					currentTechnology.addRelation(reltype, count, mi, target);
-					target.addRelation(reltype, count, mi, currentTechnology);
+					currentTechnology.addCooccurrenceRelation(reltype, count, mi, target);
+					target.addCooccurrenceRelation(reltype, count, mi, currentTechnology);
 					//Relation rel = new Relation(reltype, currentTechnology, target);
 					//currentTechnology.relations.add(rel);
 					//target.relations.add(rel);
 				}
+			}
+		}
+	}
+
+	static void loadTermRelations(String trFile, Taxonomy taxonomy) throws FileNotFoundException {
+		if (new File(trFile).isFile()) {
+			System.out.println("Reading term relations...");
+			FileInputStream inputStream = new FileInputStream(trFile);
+			Scanner sc = new Scanner(inputStream, "UTF-8");
+			while (sc.hasNextLine()) {
+				String line = sc.nextLine();
+				String[] fields = line.trim().split("\t");
+				String doc = fields[0];
+				String pred = fields[1];
+				String term1 = fields[2];
+				String term2 = fields[3];
+				Technology source = taxonomy.technologies.get(term1);
+				Technology target = taxonomy.technologies.get(term2);
+				TermRelation rel = new TermRelation(doc, pred, source, target);
+				source.addTermRelation(rel);
+				target.addTermRelation(rel);
 			}
 		}
 	}

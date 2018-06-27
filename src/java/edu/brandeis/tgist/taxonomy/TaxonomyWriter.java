@@ -141,10 +141,28 @@ public class TaxonomyWriter {
 				if (technology.relations.size() > 0) {
 					writer.write(technology.name + "\n");
 					for (String relatedTech : technology.relations.keySet()) {
-						Relation rel = technology.relations.get(relatedTech);
+						CooccurrenceRelation rel = technology.relations.get(relatedTech);
 						writer.write(String.format(
 								"\trel\t%s",
 								rel.asTabSeparatedString(technology)));
+					}
+				}
+			}
+		}
+	}
+
+
+	static void writeTermRelations(File trFile, Taxonomy taxonomy) throws IOException {
+		trFile.createNewFile();
+		try (OutputStreamWriter writer =
+				new OutputStreamWriter(
+					new FileOutputStream(trFile), StandardCharsets.UTF_8)) {
+			for (Technology technology : taxonomy.technologies.values()) {
+				if (technology.termRelations.size() > 0) {
+					for (TermRelation rel : technology.termRelations) {
+						writer.write(String.format(
+								"%s\t%s\t%s\t%s\n", rel.document, rel.relation,
+								rel.source.name, rel.target.name));
 					}
 				}
 			}

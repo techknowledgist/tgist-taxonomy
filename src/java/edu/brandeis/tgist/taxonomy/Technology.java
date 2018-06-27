@@ -16,7 +16,8 @@ public class Technology implements Comparable {
 	List<Technology> hypernyms;
 	List<Technology> hyponyms;
 	List<IsaRelation> isaRelations;
-	Map<String, Relation> relations;
+	List<TermRelation> termRelations;
+	Map<String, CooccurrenceRelation> relations;
 
 	Technology(String term, float score, int count) {
 		this.name = term;
@@ -24,6 +25,7 @@ public class Technology implements Comparable {
 		this.score = score;
 		this.relations = new HashMap<>();
 		this.isaRelations = new ArrayList<>();
+		this.termRelations = new ArrayList<>();
 		this.hypernyms = new ArrayList<>();
 		this.hyponyms = new ArrayList<>();
 	}
@@ -33,16 +35,6 @@ public class Technology implements Comparable {
 		return String.format(
 				"<term='%s' count=%d score=%f>", this.name, this.count, this.score);
 	}
-
-	/**
-	 *
-	 * @param t
-	 * @return
-	 */
-//	@Override
-//	public int compareTo(Technology t) {
-//		return this.name.compareTo(t.name);
-//	}
 
 	@Override
 	public int compareTo(Object o) {
@@ -55,30 +47,35 @@ public class Technology implements Comparable {
 
 	public void prettyPrint() {
 		System.out.println(this);
-		for (Relation rel : this.relations.values()) {
+		for (CooccurrenceRelation rel : this.relations.values()) {
 			System.out.println("   " + rel);
 		}
 	}
 
-	public void addRelation(String relType, Technology tech) {
+	// TODO: using relType seems rather useless
+	public void addCooccurrenceRelation(String relType, Technology tech) {
 		if (this.relations.containsKey(tech.name)) {
 			this.relations.get(tech.name).count++;
 		} else {
-			this.relations.put(tech.name, new Relation(relType, this, tech)); }
+			this.relations.put(tech.name, new CooccurrenceRelation(relType, this, tech)); }
 	}
 
-	public void addRelation(String relType, int count, Technology tech) {
+	public void addCooccurrenceRelation(String relType, int count, Technology tech) {
 		if (this.relations.containsKey(tech.name)) {
 			this.relations.get(tech.name).count++;
 		} else {
-			this.relations.put(tech.name, new Relation(relType, count, this, tech)); }
+			this.relations.put(tech.name, new CooccurrenceRelation(relType, count, this, tech)); }
 	}
 
-	public void addRelation(String relType, int count, float mi, Technology tech) {
+	public void addCooccurrenceRelation(String relType, int count, float mi, Technology tech) {
 		if (this.relations.containsKey(tech.name)) {
 			this.relations.get(tech.name).count++;
 		} else {
-			this.relations.put(tech.name, new Relation(relType, count, mi, this, tech)); }
+			this.relations.put(tech.name, new CooccurrenceRelation(relType, count, mi, this, tech)); }
+	}
+
+	public void addTermRelation(TermRelation rel) {
+		this.termRelations.add(rel);
 	}
 
 	public String asTabSeparatedFields() {
@@ -91,7 +88,7 @@ public class Technology implements Comparable {
 		Set<String> targets = relations.keySet();
 		ArrayList<String> keysToDelete = new ArrayList<>();
 		for (String target : targets) {
-			Relation rel = this.relations.get(target);
+			CooccurrenceRelation rel = this.relations.get(target);
 			if (rel.count < 3)
 				keysToDelete.add(target); }
 		for (String keyToDelete : keysToDelete)

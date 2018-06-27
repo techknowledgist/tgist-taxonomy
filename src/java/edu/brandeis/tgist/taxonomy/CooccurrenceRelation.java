@@ -1,6 +1,13 @@
 package edu.brandeis.tgist.taxonomy;
 
-public class Relation implements Comparable {
+public class CooccurrenceRelation implements Comparable {
+
+	/**
+	 * Class used to model the co-occurrence of two technologies in a document.
+	 *
+	 * A CooccurrenceRelation between two technologies t1 and t2 exist if the next
+	 * technology in a document after t1 is t2.
+	 */
 
 	public static final String COOCCURENCE_RELATION = "coocc";
 
@@ -9,7 +16,7 @@ public class Relation implements Comparable {
 	float mi;
 	Technology source, target;
 
-	Relation(String type, Technology source, Technology target) {
+	CooccurrenceRelation(String type, Technology source, Technology target) {
 		this.relType = type;
 		this.count = 1;
 		this.mi = 0f;
@@ -17,7 +24,7 @@ public class Relation implements Comparable {
 		this.target = target;
 	}
 
-	Relation(String relType, int count, Technology source, Technology target) {
+	CooccurrenceRelation(String relType, int count, Technology source, Technology target) {
 		this.relType = relType;
 		this.count = count;
 		this.mi = 0f;
@@ -25,7 +32,7 @@ public class Relation implements Comparable {
 		this.target = target;
 	}
 
-	Relation(String relType, int count, float mi, Technology source, Technology target) {
+	CooccurrenceRelation(String relType, int count, float mi, Technology source, Technology target) {
 		this.relType = relType;
 		this.count = count;
 		this.mi = mi;
@@ -59,7 +66,7 @@ public class Relation implements Comparable {
 
 	@Override
 	public int compareTo(Object o) {
-		Relation rel = (Relation) o;
+		CooccurrenceRelation rel = (CooccurrenceRelation) o;
 		if (this.mi < rel.mi) return 1;
 		else if (this.mi > rel.mi) return -1;
 		return 0;

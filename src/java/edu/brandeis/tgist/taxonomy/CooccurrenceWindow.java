@@ -62,4 +62,11 @@ public class CooccurrenceWindow {
 		}
 		return pairs;
 	}
+
+	public ArrayList<FeatureVector> firstTwoVectors() {
+		ArrayList pair = new ArrayList();
+		pair.add(this.vectors.get(0));
+		pair.add(this.vectors.get(1));
+		return pair;
+	}
 }

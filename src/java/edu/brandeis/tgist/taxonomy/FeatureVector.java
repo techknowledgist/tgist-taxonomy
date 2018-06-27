@@ -9,7 +9,7 @@ public class FeatureVector {
 
 	// just to get all features
 	// static Map<String, Integer> FEATS = new HashMap<>();
-	
+
 	static final String DOC_LOC = "doc_loc";
 	static final String SECTION_LOC = "section_loc";
 	static final String SENT_LOC = "sent_loc";
@@ -36,11 +36,11 @@ public class FeatureVector {
 		DOC_LOC, SECTION_LOC, SENT_LOC, PLEN, TAG_SIG, FIRST_WORD, LAST_WORD,
 		SUFFIX2, SUFFIX3, SUFFIX4, SUFFIX5, NEXT2_TAGS, NEXT_N2, NEXT_N3,
 		PREV_N2, PREV_N3, PREV_NPR, PREV_VNP, PREV_J, PREV_JPR, PREV_V };
-	
+
 	static Map<String, Integer> FEAT_IDX = new HashMap<>();
-	
+
 	static { setFeatureIndex(); }
-	
+
 	String fileName;
 	String id;
 	String term;
@@ -59,26 +59,26 @@ public class FeatureVector {
 	 * the tag signature in a feature vector.
 	 */
 	Map<String, String> featuresIdx;
-	
+
 	// NOTE: this is for the array where we can find a feature because a feature
 	// has a fixed position
 	// TODO: figure out how to do the feature access, maybe some kind of lazy
 	// initialization of the index. Includes sorting out how we name all the fields.
 	String[] featureList;
-	
+
 
 	/**
 	 * Create a feature vector from a tab-separated line. The feature vector
 	 * will not have a feature index, instead, the features are simply stored as
 	 * an array.
-	 * 
+	 *
 	 * The format of the line is as follows:
 	 *
 	 *    filename identifier year term feature+
-	 * 
-	 * This format is exactly how feature vectors are stored in the features.txt 
+	 *
+	 * This format is exactly how feature vectors are stored in the features.txt
      * file of a taxonomy.
-     * 
+     *
 	 * @param line Tab-separated String.
 	 */
 	FeatureVector(String line) {
@@ -89,12 +89,12 @@ public class FeatureVector {
 	 * Create a feature vector from a tab-separated line. This is very similar to
 	 * FeatureVector(String line) except that here we add a flag that determines
 	 * whether the vector has a feature index.
-     * 
+     *
 	 * @param line Tab-separated String.
 	 * @param addIndex A boolean indicating whether to add an index.
 	 */
 	FeatureVector(String line, boolean addIndex) {
-		
+
 		String[] fields = line.split("\t");
 		this.fileName = fields[0];
 		this.id = fields[1];
@@ -117,6 +117,7 @@ public class FeatureVector {
 			//int count = FEATS.getOrDefault(featval[0], 0);
 			//FEATS.put(featval[0], count + 1);
 		}
+		//System.out.print(this.featuresIdx);
 	}
 
 	static void setFeatureIndex() {
@@ -124,7 +125,7 @@ public class FeatureVector {
 			FEAT_IDX.put(FEAT_LIST[i], i);
 		//System.out.println(FEAT_IDX);
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format(
@@ -136,6 +137,15 @@ public class FeatureVector {
 		return String.format("%s\t%s\t%d\t%s\t%s\n",
 				this.fileName, this.id, this.year, this.term,
 				String.join("\t", this.features));
+	}
+
+	public boolean potentiallyRelatedTo(FeatureVector other) {
+		if (this.fileName.equals(other.fileName)
+				&& this.featuresIdx.get(DOC_LOC).equals(other.featuresIdx.get(DOC_LOC))
+				&& other.featuresIdx.get(PREV_V) != null)
+			return true;
+		else
+			return false;
 	}
 
 }
