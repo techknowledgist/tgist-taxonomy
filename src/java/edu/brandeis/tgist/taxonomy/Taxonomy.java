@@ -293,8 +293,8 @@ public class Taxonomy {
 				relationCount++;
 				// These are stored on both source and target technologies
 				// (as opposed to isa relations, which go only one way)
-				t1.addCooccurrenceRelation(relType, t2);
-				t2.addCooccurrenceRelation(relType, t1);
+				t1.addCooccurrenceRelation(t2);
+				t2.addCooccurrenceRelation(t1);
 				ArrayList<FeatureVector> vectors = window.firstTwoVectors();
 				String pred = predicateFromVectorMerge(vectors);
 				if (pred != null) {
@@ -316,7 +316,7 @@ public class Taxonomy {
 		File rFile = new File(this.location + File.separator + RELATIONS_FILE);
 		File trFile = new File(this.location + File.separator + TERM_RELATIONS_FILE);
 		calculateMutualInformation();
-		TaxonomyWriter.writeRelations(rFile, this);
+		TaxonomyWriter.writeCooccurrenceRelations(rFile, this);
 		TaxonomyWriter.writeTermRelations(trFile, this);
 	}
 

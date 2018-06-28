@@ -132,7 +132,7 @@ public class TaxonomyWriter {
 		}
 	}
 
-	static void writeRelations(File rFile, Taxonomy taxonomy) throws IOException {
+	static void writeCooccurrenceRelations(File rFile, Taxonomy taxonomy) throws IOException {
 		rFile.createNewFile();
 		try (OutputStreamWriter writer =
 				new OutputStreamWriter(
@@ -143,7 +143,7 @@ public class TaxonomyWriter {
 					for (String relatedTech : technology.relations.keySet()) {
 						CooccurrenceRelation rel = technology.relations.get(relatedTech);
 						writer.write(String.format(
-								"\trel\t%s",
+								"\t%s",
 								rel.asTabSeparatedString(technology)));
 					}
 				}

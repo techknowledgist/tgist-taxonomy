@@ -153,13 +153,12 @@ public class TaxonomyLoader {
 					//System.out.println(currentTechnology);
 				} else {
 					//System.out.println(fields[0]);
-					String reltype = fields[1];
-					int count = Integer.parseInt(fields[2]);
-					float mi = Float.parseFloat(fields[3]);
-					Technology target = taxonomy.technologies.get(fields[4]);
+					int count = Integer.parseInt(fields[0]);
+					float mi = Float.parseFloat(fields[1]);
+					Technology target = taxonomy.technologies.get(fields[2]);
 					//System.out.println(line);
-					currentTechnology.addCooccurrenceRelation(reltype, count, mi, target);
-					target.addCooccurrenceRelation(reltype, count, mi, currentTechnology);
+					currentTechnology.addCooccurrenceRelation(count, mi, target);
+					target.addCooccurrenceRelation(count, mi, currentTechnology);
 					//Relation rel = new Relation(reltype, currentTechnology, target);
 					//currentTechnology.relations.add(rel);
 					//target.relations.add(rel);

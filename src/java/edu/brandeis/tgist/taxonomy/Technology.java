@@ -53,25 +53,25 @@ public class Technology implements Comparable {
 	}
 
 	// TODO: using relType seems rather useless
-	public void addCooccurrenceRelation(String relType, Technology tech) {
+	public void addCooccurrenceRelation(Technology tech) {
 		if (this.relations.containsKey(tech.name)) {
 			this.relations.get(tech.name).count++;
 		} else {
-			this.relations.put(tech.name, new CooccurrenceRelation(relType, this, tech)); }
+			this.relations.put(tech.name, new CooccurrenceRelation(this, tech)); }
 	}
 
-	public void addCooccurrenceRelation(String relType, int count, Technology tech) {
+	public void addCooccurrenceRelation(int count, Technology tech) {
 		if (this.relations.containsKey(tech.name)) {
 			this.relations.get(tech.name).count++;
 		} else {
-			this.relations.put(tech.name, new CooccurrenceRelation(relType, count, this, tech)); }
+			this.relations.put(tech.name, new CooccurrenceRelation(count, this, tech)); }
 	}
 
-	public void addCooccurrenceRelation(String relType, int count, float mi, Technology tech) {
+	public void addCooccurrenceRelation(int count, float mi, Technology tech) {
 		if (this.relations.containsKey(tech.name)) {
 			this.relations.get(tech.name).count++;
 		} else {
-			this.relations.put(tech.name, new CooccurrenceRelation(relType, count, mi, this, tech)); }
+			this.relations.put(tech.name, new CooccurrenceRelation(count, mi, this, tech)); }
 	}
 
 	public void addTermRelation(TermRelation rel) {

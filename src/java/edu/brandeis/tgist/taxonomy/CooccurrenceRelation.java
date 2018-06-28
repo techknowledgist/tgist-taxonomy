@@ -11,29 +11,25 @@ public class CooccurrenceRelation implements Comparable {
 
 	public static final String COOCCURENCE_RELATION = "coocc";
 
-	String relType;
 	int count;
 	float mi;
 	Technology source, target;
 
-	CooccurrenceRelation(String type, Technology source, Technology target) {
-		this.relType = type;
+	CooccurrenceRelation(Technology source, Technology target) {
 		this.count = 1;
 		this.mi = 0f;
 		this.source = source;
 		this.target = target;
 	}
 
-	CooccurrenceRelation(String relType, int count, Technology source, Technology target) {
-		this.relType = relType;
+	CooccurrenceRelation(int count, Technology source, Technology target) {
 		this.count = count;
 		this.mi = 0f;
 		this.source = source;
 		this.target = target;
 	}
 
-	CooccurrenceRelation(String relType, int count, float mi, Technology source, Technology target) {
-		this.relType = relType;
+	CooccurrenceRelation(int count, float mi, Technology source, Technology target) {
 		this.count = count;
 		this.mi = mi;
 		this.source = source;
@@ -42,8 +38,8 @@ public class CooccurrenceRelation implements Comparable {
 
 	@Override
 	public String toString() {
-		return String.format("<Relation %s (%d - %.2f) : '%s' ==> '%s'>",
-				this.relType, this.count, this.mi, this.source.name, this.target.name);
+		return String.format("<CooccurrenceRelation (%d - %.2f) : '%s' ==> '%s'>",
+				this.count, this.mi, this.source.name, this.target.name);
 	}
 
 	public Technology getTarget() {
@@ -51,14 +47,14 @@ public class CooccurrenceRelation implements Comparable {
 	}
 
 	public String asTabSeparatedString() {
-		return String.format("%s\t%s\t%s\n",
-			this.relType, this.source.name, this.target.name);
+		return String.format("%s\t%s\n",
+			this.source.name, this.target.name);
 	}
 
 	public String asTabSeparatedString(Technology technology) {
 		if (technology.name.equals(source.name)) {
-			return String.format("%s\t%d\t%.4f\t%s\n",
-					this.relType, this.count, this.mi, this.target.name);
+			return String.format("%d\t%.4f\t%s\n",
+					this.count, this.mi, this.target.name);
 		} else {
 			return asTabSeparatedString();
 		}
