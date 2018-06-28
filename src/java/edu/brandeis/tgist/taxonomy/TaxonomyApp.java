@@ -163,7 +163,7 @@ public class TaxonomyApp {
 			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
 			taxonomy.loadRelations();
 			taxonomy.prettyPrint();
-			taxonomy.userLoop();
+			UserLoop.run(taxonomy);
 		} catch (FileNotFoundException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex);
 		}

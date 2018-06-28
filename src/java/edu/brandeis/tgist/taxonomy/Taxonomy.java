@@ -8,12 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -369,113 +367,6 @@ public class Taxonomy {
 		for (Technology technology : this.technologies.values())
 			count += technology.relations.size();
 		return count;
-	}
-
-	void userLoop() throws FileNotFoundException {
-		String term = null;
-		try (Scanner reader = new Scanner(System.in)) {
-			Map<Integer, String> mappings = new HashMap<>();
-			while (true) {
-				if (term == null) {
-					mappings = printSummary();
-				}
-				System.out.print("\n>>> ");
-				term = reader.nextLine();
-				if (term.equals("q"))
-					break;
-				if (term.equals("h")) {
-					term = null;
-					continue; }
-				// some abbreviations for debugging
-				if (term.equals("ga")) term = "genetic algorithm";
-				if (term.equals("aga")) term = "adaptive genetic algorithm";
-				if (term.equals("gr")) term = "greedy block coordinate descent algorithm";
-				if (term.matches("^\\d+$")) {
-					int idx = Integer.parseInt(term);
-					term = mappings.get(idx);
-				}
-				//System.out.println(String.format("[%s]", term));
-				Technology tech = this.technologies.get(term);
-				if (tech == null)
-					System.out.println("Not in taxonomy");
-				else
-					mappings = printFragment(tech);
-			}
-		}
-	}
-
-	HashMap<Integer, String> printSummary() {
-		HashMap<Integer, String> mappings = new HashMap<>();
-		int idx = 0;
-		System.out.print(
-				String.format("\n%s%s Corpus%s\n\n", Node.BOLD, this.name, Node.END));
-		System.out.print("Most significant terms:\n\n");
-		Object[] actTerms = this.getActTerms();
-		for (Object technology : actTerms) {
-			idx++;
-			Technology t2 = (Technology) technology;
-			mappings.put(idx, t2.name);
-			System.out.print(String.format("    [%d] %s", idx, t2.name + "\n"));
-		}
-		return mappings;
-	}
-
-	HashMap<Integer, String> printFragment(Technology tech) {
-		HashMap<Integer, String> mappings = new HashMap<>();
-		int idx = 0;
-		String hyphens = "-------------------------------------------------";
-		System.out.println("\n" + hyphens + "\n");
-		System.out.println(Node.BOLD + tech.name.toUpperCase() + Node.END + "\n");
-		System.out.println("Occurrences in dataset: " + tech.count + "\n");
-		if (tech.hypernyms.isEmpty())
-			System.out.println("Top");
-		else {
-			for (Technology hyper : tech.hypernyms) {
-				idx++;
-				mappings.put(idx, hyper.name);
-				System.out.println(String.format("[%d] %s", idx, hyper.name)); }}
-		System.out.println("  " + Node.BLUE + Node.BOLD + tech.name + Node.END);
-		int hypoCount = 0;
-		for (Technology hypo : tech.hyponyms) {
-			idx++;
-			mappings.put(idx, hypo.name);
-			hypoCount++;
-			//if (hypoCount > 10) break;
-			System.out.println(String.format("    [%d] %s", idx, hypo.name));
-		}
-		System.out.println("\n" + Node.UNDER + "Related terms:" + Node.END + "\n");
-
-		Collection<CooccurrenceRelation> relations = tech.relations.values();
-		Object[] sortedRelations = relations.toArray();
-		Arrays.sort(sortedRelations);
-
-		int relCount = 0;
-		for (Object obj : sortedRelations) {
-			idx++;
-			relCount++;
-			if (relCount > 20) break;
-			CooccurrenceRelation rel = (CooccurrenceRelation) obj;
-			String relTarget = rel.target.name;
-			mappings.put(idx, rel.target.name);
-			System.out.println(String.format("    [%d] %s", idx, rel.target.name));
-		}
-
-		System.out.println("\n" + Node.UNDER + "Relations:" + Node.END + "\n");
-
-		for (TermRelation rel : tech.termRelations) {
-			idx++;
-			String term1 = rel.source.name;
-			String term2 = rel.target.name;
-			if (tech.name.equals(term1))
-				mappings.put(idx, term2);
-			else
-				mappings.put(idx, term1);
-			System.out.println(String.format(
-					"    [%d]  %s ( %s , %s )", idx, rel.relation, term1, term2));
-		}
-
-		System.out.println("\n" + hyphens);
-		return mappings;
 	}
 
 	void exportTables(String outputDir) throws IOException {
