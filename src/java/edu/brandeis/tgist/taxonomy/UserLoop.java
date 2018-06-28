@@ -3,8 +3,10 @@ package edu.brandeis.tgist.taxonomy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 
 public class UserLoop {
@@ -105,12 +107,10 @@ public class UserLoop {
 	private static int printCooccurrenceRelations(
 			Technology tech, HashMap<Integer, String> mappings, int idx) {
 
-		System.out.println("\n" + Node.UNDER + "Related terms:" + Node.END + "\n");
-
-		Collection<CooccurrenceRelation> relations = tech.relations.values();
-		Object[] sortedRelations = relations.toArray();
+		Object[] sortedRelations = tech.relations.values().toArray();
 		Arrays.sort(sortedRelations);
-
+		if (sortedRelations.length == 0) return idx;
+		System.out.println("\n" + Node.UNDER + "Related terms:" + Node.END + "\n");
 		int relCount = 0;
 		for (Object obj : sortedRelations) {
 			idx++;
@@ -127,15 +127,31 @@ public class UserLoop {
 	private static int printTermRelations(
 			Technology tech, HashMap<Integer, String> mappings, int idx) {
 
+		if (tech.termRelations.isEmpty()) return idx;
+
+		Object[] sortedRelations = tech.termRelations.toArray();
+		Arrays.sort(sortedRelations);
+
+		Set<String> rels = new HashSet<>();
+
 		System.out.println("\n" + Node.UNDER + "Relations:" + Node.END + "\n");
-		for (TermRelation rel : tech.termRelations) {
+		for (Object obj : sortedRelations) {
+			TermRelation rel = (TermRelation) obj;
+			String sig = rel.getSignature();
+			if (rels.contains(sig)) continue;
 			idx++;
+			rels.add(sig);
 			String term1 = rel.source.name;
 			String term2 = rel.target.name;
 			String mapped_term = tech.name.equals(term1) ? term2 : term1;
 			mappings.put(idx, mapped_term);
+			//System.out.println(String.format(
+			//		"    [%d]  %s ( %s , %s )", idx, rel.relation, term1, term2));
 			System.out.println(String.format(
-					"    [%d]  %s ( %s , %s )", idx, rel.relation, term1, term2)); }
+					"    [%d]  %s : [%s] ==> [%s]", idx, rel.relation, term1, term2));
+			//System.out.println(String.format(
+			//		"    [%d]  [%s] %s [%s]", idx, term1, rel.relation, term2));
+		}
 		return idx;
 	}
 
