@@ -80,7 +80,7 @@ public class TaxonomyApp {
 		boolean runInitialization = false;
 		boolean runImport = false;
 		boolean runBuildHierarchy = false;
-		boolean runAddRelations = true;
+		boolean runAddRelations = false;
 		boolean runExport = false;
 		boolean runLoop = true;
 

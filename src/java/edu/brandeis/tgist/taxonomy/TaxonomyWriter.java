@@ -161,8 +161,8 @@ public class TaxonomyWriter {
 				if (technology.termRelations.size() > 0) {
 					for (TermRelation rel : technology.termRelations) {
 						writer.write(String.format(
-								"%s\t%s\t%s\t%s\n", rel.document, rel.relation,
-								rel.source.name, rel.target.name));
+								"%s\t%s\t%s\t%s\t%s\n", rel.document, rel.relation,
+								rel.source.name, rel.target.name, String.join(" ", rel.tokens)));
 					}
 				}
 			}

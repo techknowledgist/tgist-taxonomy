@@ -145,12 +145,9 @@ public class UserLoop {
 			String term2 = rel.target.name;
 			String mapped_term = tech.name.equals(term1) ? term2 : term1;
 			mappings.put(idx, mapped_term);
-			//System.out.println(String.format(
-			//		"    [%d]  %s ( %s , %s )", idx, rel.relation, term1, term2));
 			System.out.println(String.format(
 					"    [%d]  %s : [%s] ==> [%s]", idx, rel.relation, term1, term2));
-			//System.out.println(String.format(
-			//		"    [%d]  [%s] %s [%s]", idx, term1, rel.relation, term2));
+			//System.out.println(String.format("          %s", String.join(" ", rel.tokens)));
 		}
 		return idx;
 	}

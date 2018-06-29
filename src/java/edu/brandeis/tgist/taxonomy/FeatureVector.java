@@ -133,6 +133,10 @@ public class FeatureVector {
 				this.fileName, this.term, this.features.length);
 	}
 
+	public String getFeature(String feat) {
+		return this.featuresIdx.get(feat);
+	}
+
 	String asTabSeparatedFields() {
 		return String.format("%s\t%s\t%d\t%s\t%s\n",
 				this.fileName, this.id, this.year, this.term,

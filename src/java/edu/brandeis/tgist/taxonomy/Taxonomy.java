@@ -272,7 +272,6 @@ public class Taxonomy {
 
 	void addRelations() throws IOException {
 
-		String relType = CooccurrenceRelation.COOCCURENCE_RELATION;
 		int relationCount = 0;
 		int termRelationCount = 0;
 		System.out.println();
@@ -298,7 +297,7 @@ public class Taxonomy {
 				if (pred != null) {
 					termRelationCount++;
 					String doc = vectors.get(0).fileName;
-					TermRelation rel = new TermRelation(doc, pred, t1, t2);
+					TermRelation rel = new TermRelation(doc, pred, t1, t2, vectors);
 					t1.addTermRelation(rel);
 					t2.addTermRelation(rel);
 				}

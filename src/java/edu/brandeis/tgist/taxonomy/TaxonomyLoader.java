@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
@@ -179,9 +181,11 @@ public class TaxonomyLoader {
 				String pred = fields[1];
 				String term1 = fields[2];
 				String term2 = fields[3];
+				String tokens = fields[4];
 				Technology source = taxonomy.technologies.get(term1);
 				Technology target = taxonomy.technologies.get(term2);
 				TermRelation rel = new TermRelation(doc, pred, source, target);
+				rel.tokens = Arrays.asList(tokens.split(" "));
 				source.addTermRelation(rel);
 				target.addTermRelation(rel);
 			}
