@@ -151,7 +151,6 @@ public class TaxonomyWriter {
 		}
 	}
 
-
 	static void writeTermRelations(File trFile, Taxonomy taxonomy) throws IOException {
 		trFile.createNewFile();
 		try (OutputStreamWriter writer =
@@ -160,9 +159,9 @@ public class TaxonomyWriter {
 			for (Technology technology : taxonomy.technologies.values()) {
 				if (technology.termRelations.size() > 0) {
 					for (TermRelation rel : technology.termRelations) {
-						writer.write(String.format(
-								"%s\t%s\t%s\t%s\t%s\n", rel.document, rel.relation,
-								rel.source.name, rel.target.name, String.join(" ", rel.tokens)));
+						// TODO: replace the empty dummy string with context stuff
+						writer.write(String.format("%s\t%s\t%s\t%s\t%s\n", rel.document, rel.pred,
+								rel.source.name, rel.target.name, rel.contextAsTabSeparatedString()));
 					}
 				}
 			}

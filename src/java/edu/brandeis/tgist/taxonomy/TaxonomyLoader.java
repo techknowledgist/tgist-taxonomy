@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Scanner;
@@ -95,7 +94,7 @@ public class TaxonomyLoader {
 			int c = 0;
 			while (sc.hasNextLine()) {
 				c++;
-				//if (c > 1000) break;
+				//if (c > 200) break;
 				if ((c % 100000) == 0) System.out.println(String.format("%d", c));
 				String line = sc.nextLine();
 				taxonomy.features.add(new FeatureVector(line, true));
@@ -152,18 +151,12 @@ public class TaxonomyLoader {
 				String[] fields = line.trim().split("\t");
 				if (fields.length == 1) {
 					currentTechnology = taxonomy.technologies.get(fields[0]);
-					//System.out.println(currentTechnology);
 				} else {
-					//System.out.println(fields[0]);
 					int count = Integer.parseInt(fields[0]);
 					float mi = Float.parseFloat(fields[1]);
 					Technology target = taxonomy.technologies.get(fields[2]);
-					//System.out.println(line);
 					currentTechnology.addCooccurrenceRelation(count, mi, target);
 					target.addCooccurrenceRelation(count, mi, currentTechnology);
-					//Relation rel = new Relation(reltype, currentTechnology, target);
-					//currentTechnology.relations.add(rel);
-					//target.relations.add(rel);
 				}
 			}
 		}
@@ -181,11 +174,11 @@ public class TaxonomyLoader {
 				String pred = fields[1];
 				String term1 = fields[2];
 				String term2 = fields[3];
-				String tokens = fields[4];
 				Technology source = taxonomy.technologies.get(term1);
 				Technology target = taxonomy.technologies.get(term2);
 				TermRelation rel = new TermRelation(doc, pred, source, target);
-				rel.tokens = Arrays.asList(tokens.split(" "));
+				for (int i = 4 ;  i < fields.length ; i++)
+					rel.addContextElement(fields[i]);
 				source.addTermRelation(rel);
 				target.addTermRelation(rel);
 			}

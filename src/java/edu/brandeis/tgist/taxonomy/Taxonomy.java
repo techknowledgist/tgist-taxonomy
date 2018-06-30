@@ -298,6 +298,11 @@ public class Taxonomy {
 					termRelationCount++;
 					String doc = vectors.get(0).fileName;
 					TermRelation rel = new TermRelation(doc, pred, t1, t2, vectors);
+					//System.out.println(rel);
+					//System.out.println("   " + rel.document);
+					//System.out.print("   ");
+					//rel.context.pp();
+					//System.out.println();
 					t1.addTermRelation(rel);
 					t2.addTermRelation(rel);
 				}

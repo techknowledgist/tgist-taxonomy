@@ -1,7 +1,6 @@
 package edu.brandeis.tgist.taxonomy;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -98,6 +97,7 @@ public class UserLoop {
 
 	private static String expand(String term) {
 		// some abbreviations for debugging
+		if (term.equals("as")) return "analog summing";
 		if (term.equals("ga")) return "genetic algorithm";
 		if (term.equals("aga")) return "adaptive genetic algorithm";
 		if (term.equals("gr")) return "greedy block coordinate descent algorithm";
@@ -145,9 +145,9 @@ public class UserLoop {
 			String term2 = rel.target.name;
 			String mapped_term = tech.name.equals(term1) ? term2 : term1;
 			mappings.put(idx, mapped_term);
-			System.out.println(String.format(
-					"    [%d]  %s : [%s] ==> [%s]", idx, rel.relation, term1, term2));
-			//System.out.println(String.format("          %s", String.join(" ", rel.tokens)));
+			System.out.println(String.format("    [%d]  %s : [%s] ==> [%s]", idx, rel.pred, term1, term2));
+			System.out.print("          ");
+			rel.ppContext();
 		}
 		return idx;
 	}
