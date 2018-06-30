@@ -340,13 +340,7 @@ public class Taxonomy {
 		checkpoint.reset();
 		Map<String, List<Technology>> groupedTechnologies;
 		groupedTechnologies = new HashMap<>();
-		int c = 0;
 		for (FeatureVector vector : this.features) {
-			//System.out.println(vector);
-			c++;
-			if ((c % 100000) == 0) {
-				System.out.println(c);
-				System.out.flush(); }
 			// NOTE: a technology might occur multiple times in a document
 			// TODO: should probably group the vectors and not the technologies
 			groupedTechnologies
@@ -355,9 +349,6 @@ public class Taxonomy {
 					.get(vector.fileName)
 					.add(this.technologies.get(vector.term));
 		}
-		checkpoint.report("groupTechnologiesByDocument");
-		//checkpoint.showFootPrint("groupedTechnologies", groupedTechnologies);
-		//System.exit(0);
 		return groupedTechnologies;
 	}
 
@@ -373,26 +364,11 @@ public class Taxonomy {
 		return count;
 	}
 
-	void exportTables(String outputDir) throws IOException {
-		new File(outputDir).mkdirs();
-		TaxonomyWriter.writeTermsAsTable(
-				txtFile(this.location, TECHNOLOGIES_FILE),
-				sqlFile(outputDir, TECHNOLOGIES_FILE));
-		TaxonomyWriter.writeHierarchyAsTable(
-				txtFile(this.location, HIERARCHY_FILE),
-				sqlFile(outputDir, HIERARCHY_FILE));
-		TaxonomyWriter.writeRelationsAsTable(
-				txtFile(this.location, RELATIONS_FILE),
-				sqlFile(outputDir, RELATIONS_FILE));
-	}
-
-	String txtFile(String directory, String filename) {
-		return directory + File.separator + filename;
-	}
-
-	String sqlFile(String directory, String filename) {
-		String filebase = filename.substring(0, filename.lastIndexOf('.'));
-		return directory + File.separator + filebase + ".sql";
+	void exportTables() throws IOException {
+		TaxonomyWriter.writeTermsAsTable(this, TECHNOLOGIES_FILE);
+		TaxonomyWriter.writeHierarchyAsTable(this, HIERARCHY_FILE);
+		TaxonomyWriter.writeCoocRelationsAsTable(this, RELATIONS_FILE);
+		TaxonomyWriter.writeTermRelationsAsTable(this, TERM_RELATIONS_FILE);
 	}
 
 	private void calculateMutualInformation() {

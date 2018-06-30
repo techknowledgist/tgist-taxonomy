@@ -1,7 +1,6 @@
 package edu.brandeis.tgist.taxonomy;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +32,7 @@ public class TermRelation implements Comparable {
 			ArrayList<FeatureVector> vectors) {
 
 		this.document = doc;
-		this.pred = rel;
+		this.pred = rel.replace("_", " ");
 		this.source = source;
 		this.target = target;
 		this.context = new Context(this);

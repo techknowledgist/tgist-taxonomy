@@ -80,9 +80,9 @@ public class TaxonomyApp {
 		boolean runInitialization = false;
 		boolean runImport = false;
 		boolean runBuildHierarchy = false;
-		boolean runAddRelations = false;
-		boolean runExport = false;
-		boolean runLoop = true;
+		boolean runAddRelations = true;
+		boolean runExport = true;
+		boolean runLoop = false;
 
 		if (runInitialization)
 			initialize(CORPUS, TAXONOMY);
@@ -154,7 +154,7 @@ public class TaxonomyApp {
 		try {
 			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
 			taxonomy.loadRelations();
-			taxonomy.exportTables("exported_tables/" + taxonomy.name);
+			taxonomy.exportTables();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }}
 
