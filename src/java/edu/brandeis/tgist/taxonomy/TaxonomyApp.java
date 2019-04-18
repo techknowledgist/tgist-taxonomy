@@ -80,9 +80,9 @@ public class TaxonomyApp {
 		boolean runInitialization = false;
 		boolean runImport = false;
 		boolean runBuildHierarchy = false;
-		boolean runAddRelations = true;
-		boolean runExport = true;
-		boolean runLoop = false;
+		boolean runAddRelations = false;
+		boolean runExport = false;
+		boolean runLoop = true;
 
 		if (runInitialization)
 			initialize(CORPUS, TAXONOMY);
