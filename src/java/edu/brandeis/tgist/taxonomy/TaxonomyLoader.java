@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
@@ -224,6 +223,8 @@ public class TaxonomyLoader {
 	}
 
 	/**
+	 * Import domain roles from a file created by the domain role code in
+	 * https://github.com/techknowledgist/act.
 	 *
 	 * @param actsFile
 	 * @param taxonomy
@@ -247,13 +248,15 @@ public class TaxonomyLoader {
 			String[] fields = line.split("\t");
 			String term = fields[0].replace('_', ' ');
 			String act = fields[1];
-			//System.out.println(term);
+			//System.out.println(term, act);
 			Technology technology = taxonomy.technologies.get(term);
 			if (technology == null)
 				continue;
-			// we take them all right now since with these data we do not have enough
-			// technologies that qualify as a task
-			// if (act.equals("t")) {
+			// Would like to do a test for the role (act.equals("t")), but for
+			// now we take them all since with these data we do not have enough
+			// technologies that qualify as a task.
+			// TODO: we have 5305 roles, but only 279 of those are technologies
+			// TODO: why so few? (this is for SignalProcessing data)
 			c++;
 			taxonomy.acts.add(technology);
 			//System.out.println(act + technology);

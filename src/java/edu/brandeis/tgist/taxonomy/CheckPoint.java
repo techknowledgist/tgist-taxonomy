@@ -17,7 +17,8 @@ public class CheckPoint {
 	 * Initialize an instance while setting current timestamp and memory usage.
 	 */
 	CheckPoint(boolean initializeUsage) {
-		reset();
+		if (initializeUsage)
+			reset();
 	}
 
 	/**
@@ -36,6 +37,12 @@ public class CheckPoint {
 		return memory;
 	}
 
+    /**
+     * Print the difference between the current memory usage and the usage at the
+     * last check point and reset the check point. Also print the time elapsed
+     * between this checkpoint and the last one.
+     * @param header String to print before printing the memory usage
+	 */
 	public void report(String header) {
 		long currentTimestamp = System.currentTimeMillis();
 		long currentMemoryUsage = getMemoryUsage();

@@ -308,7 +308,7 @@ public class Taxonomy {
 				}
 			}
 		}
-		// The first two counts make no sense (more types than tokens)
+		// TODO: the first two counts make no sense (more types than tokens)
 		System.out.println(String.format(
 				"Occurence relations created (tokens) %,12d", relationCount));
 		System.out.println(String.format(
