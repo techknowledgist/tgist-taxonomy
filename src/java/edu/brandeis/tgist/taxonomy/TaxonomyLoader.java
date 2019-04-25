@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 
+
 public class TaxonomyLoader {
 
 	/**
@@ -25,9 +26,9 @@ public class TaxonomyLoader {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	static Properties loadProperties(String pFile)
-			throws FileNotFoundException, IOException {
-
+	public static Properties loadProperties(String pFile)
+			throws FileNotFoundException, IOException
+	{
 		Properties properties;
 		try (FileInputStream fi = new FileInputStream(pFile)) {
 			properties = new Properties();
@@ -42,8 +43,9 @@ public class TaxonomyLoader {
 	 * @param taxonomy
 	 * @throws FileNotFoundException
 	 */
-	static void loadTechnologies(String tFile, Taxonomy taxonomy) throws FileNotFoundException {
-
+	public static void loadTechnologies(String tFile, Taxonomy taxonomy)
+			throws FileNotFoundException
+	{
 		if (new File(tFile).isFile()) {
 			System.out.println("Reading technologies...");
 			FileInputStream inputStream = new FileInputStream(tFile);
@@ -59,8 +61,9 @@ public class TaxonomyLoader {
 		}
 	}
 
-	static void loadACT(String aFile, Taxonomy taxonomy) throws FileNotFoundException {
-
+	public static void loadACT(String aFile, Taxonomy taxonomy)
+			throws FileNotFoundException
+	{
 		if (new File(aFile).isFile()) {
 			System.out.println("Reading ACT terms...");
 			FileInputStream inputStream = new FileInputStream(aFile);
@@ -83,8 +86,9 @@ public class TaxonomyLoader {
 	 * @param taxonomy
 	 * @throws FileNotFoundException
 	 */
-	static void loadFeatures(String vFile, Taxonomy taxonomy) throws FileNotFoundException {
-
+	public static void loadFeatures(String vFile, Taxonomy taxonomy)
+			throws FileNotFoundException
+	{
 		if (new File(vFile).isFile()) {
 			System.out.println("Reading features...");
 			FileInputStream inputStream = new FileInputStream(vFile);
@@ -98,12 +102,14 @@ public class TaxonomyLoader {
 				String line = sc.nextLine();
 				taxonomy.features.add(new FeatureVector(line, true));
 			}
-			checkpoint.report("loadFeatures");
+			//checkpoint.report("loadFeatures");
 			//System.out.println(FeatureVector.FEATS);
 		}
 	}
 
-	static void loadHierarchy(String hFile, Taxonomy taxonomy) throws FileNotFoundException {
+	public static void loadHierarchy(String hFile, Taxonomy taxonomy)
+			throws FileNotFoundException
+	{
 		if (new File(hFile).isFile()) {
 			System.out.println("Reading hierarchy...");
 			FileInputStream inputStream = new FileInputStream(hFile);
@@ -139,7 +145,9 @@ public class TaxonomyLoader {
 		}
 	}
 
-	static void loadCooccurrenceRelations(String crFile, Taxonomy taxonomy) throws FileNotFoundException {
+	public static void loadCooccurrenceRelations(String crFile, Taxonomy taxonomy)
+			throws FileNotFoundException
+	{
 		if (new File(crFile).isFile()) {
 			System.out.println("Reading cooccurrence relations...");
 			FileInputStream inputStream = new FileInputStream(crFile);
@@ -161,7 +169,9 @@ public class TaxonomyLoader {
 		}
 	}
 
-	static void loadTermRelations(String trFile, Taxonomy taxonomy) throws FileNotFoundException {
+	public static void loadTermRelations(String trFile, Taxonomy taxonomy)
+			throws FileNotFoundException
+	{
 		if (new File(trFile).isFile()) {
 			System.out.println("Reading term relations...");
 			FileInputStream inputStream = new FileInputStream(trFile);
@@ -196,14 +206,17 @@ public class TaxonomyLoader {
 	 * to disk, for the latter we use TaxonomyWriter.writeTechnologies().
 	 *
 	 * @param termsFile
+	 * @param taxonomy
+	 * @param minTechScore
+	 * @param minCount
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
 	 * @throws IOException
 	 */
-	static void importTechnologies(
+	public static void importTechnologies(
 			String termsFile, Taxonomy taxonomy, float minTechScore, int minCount)
-			throws FileNotFoundException, UnsupportedEncodingException, IOException {
-
+			throws FileNotFoundException, UnsupportedEncodingException, IOException
+	{
 		FileInputStream fileStream = new FileInputStream(termsFile);
 		Reader decoder = new InputStreamReader(fileStream, StandardCharsets.UTF_8);
 		BufferedReader reader = new BufferedReader(decoder);
@@ -228,17 +241,15 @@ public class TaxonomyLoader {
 	 *
 	 * @param actsFile
 	 * @param taxonomy
-	 * @param minTechScore
-	 * @param minCount
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
 	 * @throws IOException
 	 */
 
-	static void importACTS(
+	public static void importACTS(
 			String actsFile, Taxonomy taxonomy)
-			throws FileNotFoundException, UnsupportedEncodingException, IOException {
-
+			throws FileNotFoundException, UnsupportedEncodingException, IOException
+	{
 		FileInputStream fileStream = new FileInputStream(actsFile);
 		Reader decoder = new InputStreamReader(fileStream, StandardCharsets.UTF_8);
 		BufferedReader reader = new BufferedReader(decoder);
@@ -256,7 +267,7 @@ public class TaxonomyLoader {
 			// now we take them all since with these data we do not have enough
 			// technologies that qualify as a task.
 			// TODO: we have 5305 roles, but only 279 of those are technologies
-			// TODO: why so few? (this is for SignalProcessing data)
+			// TODO: ... why so few? (this is for SignalProcessing data)
 			c++;
 			taxonomy.acts.add(technology);
 			//System.out.println(act + technology);
@@ -281,8 +292,9 @@ public class TaxonomyLoader {
 	 * @param featuresFile
 	 * @throws IOException
 	 */
-	static void importFeatures(String featuresFile, Taxonomy taxonomy) throws IOException {
-
+	public static void importFeatures(String featuresFile, Taxonomy taxonomy)
+			throws IOException
+	{
 		BufferedReader buffered = getGzipReader(featuresFile);
 		String fFile = taxonomy.location + File.separator + Taxonomy.FEATURES_FILE;
 		System.out.println(fFile);
@@ -322,7 +334,8 @@ public class TaxonomyLoader {
 	 * @throws IOException
 	 */
 	static BufferedReader getGzipReader(String fileName)
-			throws FileNotFoundException, IOException {
+			throws FileNotFoundException, IOException
+	{
 		FileInputStream fileStream = new FileInputStream(fileName);
 		InputStream gzipStream = new GZIPInputStream(fileStream);
 		Reader decoder = new InputStreamReader(gzipStream, StandardCharsets.UTF_8);

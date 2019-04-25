@@ -52,6 +52,15 @@ public class Taxonomy {
 	/** The name of the file that stores term relations between technologies. */
 	public static final String TERM_RELATIONS_FILE = "relations-term.txt";
 
+	/** The name of the file with input terms. */
+	public static final String INPUT_TERMS = "classify.MaxEnt.out.s4.scores.sum.az";
+
+	/** The name of the file with input features. */
+	public static final String INPUT_FEATURES = "features.txt.gz";
+
+	/** The name of the file with input term roles. */
+	public static final String INPUT_ROLES = "NB.IG50.test1.woc.9999.results.classes";
+
 	/** The minimum technology score required for a term to be included. */
 	public static float TECHSCORE = 0.5f;
 
@@ -59,16 +68,18 @@ public class Taxonomy {
 	public static int MINCOUNT = 2;
 
 	// TODO: allow changing TECHSCORE and MINCOUNT in the calling method and add
-	// the values chosen to the properties file
+	// TODO: ... the values chosen to the properties file
 
 	/** Number of terms to display on the splash screen. */
 	public static int ACT_TERMS = 25;
 
 	public String name;
 	public String location;
+	public String data;
 	public HashMap<String, Technology> technologies;
 	public List<Technology> acts;
 	public List<FeatureVector> features;
+
 
 	/**
 	 * Create a new taxonomy. Creates a new directory and initializes the taxonomy,
@@ -81,31 +92,25 @@ public class Taxonomy {
 	 *		tax.importData();
 	 *
 	 * This needs to be done only once since both technologies and features are
-	 * available internally after inportData()..
+	 * available internally after inportData().
 	 *
-	 * @param taxonomyName Name of the taxonomy.
-	 * @param taxonomyLocation Location of the taxonomy.
+	 * @param taxonomyLocation path to the taxonomy.
+	 * @param dataLocation path to the input data from the corpus
 	 * @throws java.io.IOException
 	 */
 
-	public Taxonomy(String taxonomyName, String taxonomyLocation)
-			throws IOException {
-
-		if (Files.exists(Paths.get(taxonomyLocation))) {
-			Logger.getLogger(Taxonomy.class.getName())
-					.log(Level.WARNING,
-							"a file or directory named \"{0}\" allready exists",
-							taxonomyLocation);
-			System.exit(0);
-		}
-
-		this.name = taxonomyName;
-		this.location = taxonomyLocation;
-
-		new File(taxonomyLocation).mkdirs();
+	public Taxonomy(String taxonomyLocation, String dataLocation)
+			throws IOException
+	{
+		checkTaxonomyExistence(taxonomyLocation);
+		File taxonomy = new File(taxonomyLocation);
+		this.name = taxonomy.getName();
+		this.data = dataLocation;
+		initializeData();
+		taxonomy.mkdirs();
 		ArrayList<String> lines = new ArrayList<>();
-		lines.add("name = " + taxonomyName);
-		lines.add("location = " + taxonomyLocation);
+		lines.add("name = " + this.name);
+		lines.add("data = " + this.data);
 		String pFile = taxonomyLocation + File.separator + PROPERTIES_FILE;
 		TaxonomyWriter.writeProperties(pFile, lines);
 	}
@@ -120,23 +125,45 @@ public class Taxonomy {
 	 */
 
 	public Taxonomy(String taxonomyLocation)
-			throws FileNotFoundException, IOException {
-
+			throws FileNotFoundException, IOException
+	{
 		String pFile = taxonomyLocation +  File.separator + PROPERTIES_FILE;
 		Properties properties = TaxonomyLoader.loadProperties(pFile);
-
 		this.name = properties.getProperty("name");
+		this.data = properties.getProperty("data");
 		this.location = taxonomyLocation;
-		this.technologies = new HashMap<>();
-		this.acts = new ArrayList<>();
-		this.features = new ArrayList<>();
-
+		initializeData();
 		String tFile = this.location + File.separator + TECHNOLOGIES_FILE;
 		String aFile = this.location + File.separator + ACT_FILE;
 		String hFile = this.location + File.separator + HIERARCHY_FILE;
 		TaxonomyLoader.loadTechnologies(tFile, this);
 		TaxonomyLoader.loadACT(aFile, this);
 		TaxonomyLoader.loadHierarchy(hFile, this);
+	}
+
+	/**
+	 * Initialize technologies, acts and features to empty maps and lists.
+	 */
+	private void initializeData()
+	{
+		this.technologies = new HashMap<>();
+		this.acts = new ArrayList<>();
+		this.features = new ArrayList<>();
+	}
+
+	/**
+	 * Check existence of taxonomy. Exit with a warning if the taxonomy already
+	 * exists.
+	 * @param taxonomyLocation path to the taxonomy
+	 */
+	private void checkTaxonomyExistence(String taxonomyLocation)
+	{
+		if (Files.exists(Paths.get(taxonomyLocation))) {
+			Logger.getLogger(Taxonomy.class.getName())
+					.log(Level.WARNING,
+							"a file or directory named \"{0}\" allready exists",
+							taxonomyLocation);
+			System.exit(0); }
 	}
 
 	/**
@@ -147,23 +174,28 @@ public class Taxonomy {
 	 * @throws FileNotFoundException
 	 */
 
-	public void loadRelations() throws FileNotFoundException {
+	public void loadRelations() throws FileNotFoundException
+	{
 		String crFile = this.location + File.separator + RELATIONS_FILE;
 		String trFile = this.location + File.separator + TERM_RELATIONS_FILE;
 		TaxonomyLoader.loadCooccurrenceRelations(crFile, this);
 		TaxonomyLoader.loadTermRelations(trFile, this);
 	}
 
-	public Object[] getActTerms() {
+	public Object[] getActTerms()
+	{
 		Object[] terms = this.acts.toArray();
 		Arrays.sort(terms);
 		return terms.length <= ACT_TERMS ? terms : Arrays.copyOfRange(terms, 0, ACT_TERMS);
 	}
 
 	@Override
-	public String toString() {
+	public String toString()
+	{
 		return String.format("<taxonomy.Taxonomy %s terms=%d relations=%d>",
-				this.name, this.technologies.size(), countRelations());
+				this.name,
+				this.technologies.size(),
+				countRelations());
 	}
 
 	public void prettyPrint() {
@@ -189,28 +221,36 @@ public class Taxonomy {
 	}
 
 	/**
-	 * Add data to a taxonomy.
+	 * Import data into the taxonomy.
 	 *
 	 * This is to add data created by other modules like the feature extraction,
-	 * classification and ACT. This needs to be only once, after which those data
-	 * will be stored locally to the taxonomy in a more compact format. The terms
-	 * file is a file as generated by the tgist-classifiers code, the features
-	 * file is a file generated by the tgist-features code (more specifically,
-	 * by the extract_features.py script), and the acts file is generated by the
-	 * ACT classifier.
+	 * classification and ACT modules. This needs to be only once, after which
+	 * those data will be stored locally to the taxonomy in a more compact format.
 	 *
-	 * @param termsFile
-	 * @param actsFile
-	 * @param externalFeaturesFile
+	 * Three kinds of data are imported.
+	 *
+	 * 1- A list of all terms with technology scores; this is almost always a file
+	 *    named classify.MaxEnt.out.s4.scores.sum.az that was created by the
+	 *    tgist-classifiers code.
+	 *
+	 * 2- A list of terms with scores for all three roles, created by the ACT
+	 *    classifier in https://github.com/techknowledgist/act code.
+	 *
+	 * 3- A list with all context features of all terms, created by the code in
+	 *    tgist-features (more specifically, by the extract_features.py script)
+	 *
 	 * @throws IOException
 	 */
-
-	public void importData(String termsFile, String actsFile, String externalFeaturesFile)
-			throws IOException {
-
-		File tFile = new File(this.location + File.separator + TECHNOLOGIES_FILE);
-		File aFile = new File(this.location + File.separator + ACT_FILE);
-		File vFile = new File(this.location + File.separator + FEATURES_FILE);
+	public void importData()
+			throws IOException
+	{
+		String sep = File.separator;
+		String termsFile = this.data + sep + INPUT_TERMS;
+		String actsFile = this.data + sep + INPUT_ROLES;
+		String externalFeaturesFile = this.data + sep + INPUT_FEATURES;
+		File tFile = new File(this.location + sep + TECHNOLOGIES_FILE);
+		File aFile = new File(this.location + sep + ACT_FILE);
+		File vFile = new File(this.location + sep + FEATURES_FILE);
 
 		CheckPoint cp = new CheckPoint(true);
 		TaxonomyLoader.importTechnologies(termsFile, this, TECHSCORE, MINCOUNT);
@@ -222,13 +262,15 @@ public class Taxonomy {
 		TaxonomyWriter.writeFeatures(vFile, this.features);
 	}
 
+
 	/**
 	 * Load the features.
 	 *
 	 * @throws FileNotFoundException
 	 */
 
-	void loadFeatures() throws FileNotFoundException {
+	public void loadFeatures() throws FileNotFoundException
+	{
 		String vFile = this.location + File.separator + FEATURES_FILE;
 		TaxonomyLoader.loadFeatures(vFile, this);
 	}
@@ -238,9 +280,12 @@ public class Taxonomy {
 	 * instances of IsaRelation are added to technologies such that if isa(t1,t2)
 	 * appears as a IsaRelation on both t1 and t1. In addition, if isa(t1,t2) then
 	 * t1 is added as a hypernym to t2 and t2 is added as a hyponym to t1.
+	 *
+	 * @throws java.io.IOException
 	 */
 
-	void rhhr() throws IOException {
+	public void rhhr() throws IOException
+	{
 		Node top = new Node("Top");
 		int c = 0;
 		// The way this works is by creating a tree where nodes are inserted
@@ -270,8 +315,8 @@ public class Taxonomy {
 	 * This code will be put in its own class.
 	 */
 
-	void addRelations() throws IOException {
-
+	void addRelations() throws IOException
+	{
 		int relationCount = 0;
 		int termRelationCount = 0;
 		System.out.println();
@@ -333,7 +378,8 @@ public class Taxonomy {
 	 * as values.
 	 */
 
-	private	Map<String, List<Technology>> groupTechnologiesByDocument() {
+	private	Map<String, List<Technology>> groupTechnologiesByDocument()
+	{
 		System.out.println("\nGrouping technologies");
 		CheckPoint checkpoint = new CheckPoint();
 		//checkpoint.showFootPrint("this.features", this.features);
@@ -352,26 +398,30 @@ public class Taxonomy {
 		return groupedTechnologies;
 	}
 
-	void filterRelations() {
+	void filterRelations()
+	{
 		for (Technology technology : this.technologies.values()) {
 			technology.filterRelations(); }
 	}
 
-	int countRelations() {
+	int countRelations()
+	{
 		int count = 0;
 		for (Technology technology : this.technologies.values())
 			count += technology.relations.size();
 		return count;
 	}
 
-	void exportTables() throws IOException {
+	void exportTables() throws IOException
+	{
 		TaxonomyWriter.writeTermsAsTable(this, TECHNOLOGIES_FILE);
 		TaxonomyWriter.writeHierarchyAsTable(this, HIERARCHY_FILE);
 		TaxonomyWriter.writeCoocRelationsAsTable(this, RELATIONS_FILE);
 		TaxonomyWriter.writeTermRelationsAsTable(this, TERM_RELATIONS_FILE);
 	}
 
-	private void calculateMutualInformation() {
+	private void calculateMutualInformation()
+	{
 		int n = this.technologies.size();
 		boolean debug = false;
 		int c = 0;
@@ -397,7 +447,8 @@ public class Taxonomy {
 		}
 	}
 
-	private float mutualInformation(int n, Technology t1, Technology t2, CooccurrenceRelation rel) {
+	private float mutualInformation(int n, Technology t1, Technology t2, CooccurrenceRelation rel)
+	{
 		float p_x_y = rel.count * 2 / (float) n;
 		float p_x = t1.count / (float) n;
 		float p_y = t2.count / (float) n;
@@ -415,7 +466,8 @@ public class Taxonomy {
 	 * @param vectors
 	 * @return the name of the predicate or null
 	 */
-	private String predicateFromVectorMerge(ArrayList<FeatureVector> vectors) {
+	private String predicateFromVectorMerge(ArrayList<FeatureVector> vectors)
+	{
 		FeatureVector v1 = vectors.get(0);
 		FeatureVector v2 = vectors.get(1);
 		if (v1.potentiallyRelatedTo(v2)) {
@@ -426,11 +478,13 @@ public class Taxonomy {
 		return null;
 	}
 
-	private int start_pos(String loc) {
+	private int start_pos(String loc)
+	{
 		return Integer.parseInt(loc.split("-")[0]);
 	}
 
-	private int end_pos(String loc) {
+	private int end_pos(String loc)
+	{
 		return Integer.parseInt(loc.split("-")[1]);
 	}
 

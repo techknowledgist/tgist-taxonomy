@@ -4,7 +4,24 @@ package edu.brandeis.tgist.taxonomy;
 import java.util.Enumeration;
 import java.util.Vector;
 
-public class Utils {
+public class Utils
+{
+
+	public static String bold(String text)
+	{
+		return Node.BOLD + text + Node.END;
+	}
+
+	public static String red(String text)
+	{
+		return Node.RED + text + Node.END;
+	}
+
+	public static String blue(String text)
+	{
+		return Node.BLUE + text + Node.END;
+	}
+
 
 	// http://progcookbook.blogspot.com/2006/02/text-wrapping-function-for-java.html
 	static String [] wrapText (String text, int len)
