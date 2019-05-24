@@ -38,10 +38,10 @@ public class Taxonomy {
 	public static final String FEATURES_FILE = "features.txt";
 
 	/** The name of the file that stores the technology terms. */
-	public static final String TECHNOLOGIES_FILE = "technologies.txt";
+	public static final String TERMS_FILE = "terms.txt";
 
 	/** The name of the file that stores the ACT terms. */
-	public static final String ACT_FILE = "act.txt";
+	public static final String ROLES_FILE = "roles.txt";
 
 	/** The name of the file that stores the hierarchical relations. */
 	public static final String HIERARCHY_FILE = "hierarchy.txt";
@@ -71,13 +71,13 @@ public class Taxonomy {
 	// TODO: ... the values chosen to the properties file
 
 	/** Number of terms to display on the splash screen. */
-	public static int ACT_TERMS = 25;
+	public static int NUMBER_OF_TERMS = 25;
 
 	public String name;
 	public String location;
 	public String data;
 	public HashMap<String, Technology> technologies;
-	public List<Technology> acts;
+	public List<Technology> roles;
 	public List<FeatureVector> features;
 
 
@@ -133,21 +133,21 @@ public class Taxonomy {
 		this.data = properties.getProperty("data");
 		this.location = taxonomyLocation;
 		initializeData();
-		String tFile = this.location + File.separator + TECHNOLOGIES_FILE;
-		String aFile = this.location + File.separator + ACT_FILE;
+		String tFile = this.location + File.separator + TERMS_FILE;
+		String rFile = this.location + File.separator + ROLES_FILE;
 		String hFile = this.location + File.separator + HIERARCHY_FILE;
 		TaxonomyLoader.loadTechnologies(tFile, this);
-		TaxonomyLoader.loadACT(aFile, this);
+		TaxonomyLoader.loadRoles(rFile, this);
 		TaxonomyLoader.loadHierarchy(hFile, this);
 	}
 
 	/**
-	 * Initialize technologies, acts and features to empty maps and lists.
+	 * Initialize technologies, roles and features to empty maps and lists.
 	 */
 	private void initializeData()
 	{
 		this.technologies = new HashMap<>();
-		this.acts = new ArrayList<>();
+		this.roles = new ArrayList<>();
 		this.features = new ArrayList<>();
 	}
 
@@ -182,11 +182,25 @@ public class Taxonomy {
 		TaxonomyLoader.loadTermRelations(trFile, this);
 	}
 
-	public Object[] getActTerms()
+	/**
+	 * Returns the most significant terms.
+	 *
+	 * This is now rather unsatisfactory. The idea was that the we would return
+	 * terms with the task role, but most roles could not be linked to a term so
+	 * we now take the most frequent ones of those terms that do have roles. It is
+	 * probably better to just get the most frequent terms.
+	 *
+	 * @return
+	 */
+	public Object[] getMostSignificantTerms()
 	{
-		Object[] terms = this.acts.toArray();
+		// TODO: Seriously reconsider this, could use:
+		// TODO: Object[] terms = this.technologies.values().toArray();
+		Object[] terms = this.roles.toArray();
 		Arrays.sort(terms);
-		return terms.length <= ACT_TERMS ? terms : Arrays.copyOfRange(terms, 0, ACT_TERMS);
+		return terms.length <= NUMBER_OF_TERMS
+				? terms
+				: Arrays.copyOfRange(terms, 0, NUMBER_OF_TERMS);
 	}
 
 	@Override
@@ -216,7 +230,9 @@ public class Taxonomy {
 	 * @throws FileNotFoundException
 	 */
 
-	public void printHierarchyTree() throws FileNotFoundException, IOException {
+	public void printHierarchyTree()
+			throws FileNotFoundException, IOException
+	{
 		TaxonomyWriter.writeHierarchyTree("hierachyTree.txt", this);
 	}
 
@@ -241,25 +257,30 @@ public class Taxonomy {
 	 *
 	 * @throws IOException
 	 */
+
 	public void importData()
 			throws IOException
 	{
+		// We are doing this for cases where we re-import data, if we don't do
+		// this we can get duplicate data.
+		initializeData();
+
 		String sep = File.separator;
 		String termsFile = this.data + sep + INPUT_TERMS;
-		String actsFile = this.data + sep + INPUT_ROLES;
-		String externalFeaturesFile = this.data + sep + INPUT_FEATURES;
-		File tFile = new File(this.location + sep + TECHNOLOGIES_FILE);
-		File aFile = new File(this.location + sep + ACT_FILE);
-		File vFile = new File(this.location + sep + FEATURES_FILE);
+		String rolesFile = this.data + sep + INPUT_ROLES;
+		String featuresFile = this.data + sep + INPUT_FEATURES;
+		String tFile = this.location + sep + TERMS_FILE;
+		String rFile = this.location + sep + ROLES_FILE;
+		String fFile = this.location + sep + FEATURES_FILE;
 
 		CheckPoint cp = new CheckPoint(true);
-		TaxonomyLoader.importTechnologies(termsFile, this, TECHSCORE, MINCOUNT);
-		TaxonomyLoader.importACTS(actsFile, this);
-		TaxonomyLoader.importFeatures(externalFeaturesFile, this);
+		TaxonomyLoader.importTerms(termsFile, this, TECHSCORE, MINCOUNT);
+		TaxonomyLoader.importRoles(rolesFile, this);
+		TaxonomyLoader.importFeatures(featuresFile, this);
 		//cp.report("importData");
-		TaxonomyWriter.writeTechnologies(tFile, this.technologies);
-		TaxonomyWriter.writeACT(aFile, this.acts);
-		TaxonomyWriter.writeFeatures(vFile, this.features);
+		TaxonomyWriter.writeTerms(tFile, this.technologies);
+		TaxonomyWriter.writeRoles(rFile, this.roles);
+		TaxonomyWriter.writeFeatures(fFile, this.features);
 	}
 
 
@@ -414,7 +435,7 @@ public class Taxonomy {
 
 	void exportTables() throws IOException
 	{
-		TaxonomyWriter.writeTermsAsTable(this, TECHNOLOGIES_FILE);
+		TaxonomyWriter.writeTermsAsTable(this, TERMS_FILE);
 		TaxonomyWriter.writeHierarchyAsTable(this, HIERARCHY_FILE);
 		TaxonomyWriter.writeCoocRelationsAsTable(this, RELATIONS_FILE);
 		TaxonomyWriter.writeTermRelationsAsTable(this, TERM_RELATIONS_FILE);

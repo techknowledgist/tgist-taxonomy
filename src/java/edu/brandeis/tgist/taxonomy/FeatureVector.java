@@ -81,7 +81,9 @@ public class FeatureVector {
      *
 	 * @param line Tab-separated String.
 	 */
-	FeatureVector(String line) {
+
+	FeatureVector(String line)
+	{
 		this(line, false);
 	}
 
@@ -93,8 +95,9 @@ public class FeatureVector {
 	 * @param line Tab-separated String.
 	 * @param addIndex A boolean indicating whether to add an index.
 	 */
-	FeatureVector(String line, boolean addIndex) {
 
+	FeatureVector(String line, boolean addIndex)
+	{
 		String[] fields = line.split("\t");
 		this.fileName = fields[0];
 		this.id = fields[1];

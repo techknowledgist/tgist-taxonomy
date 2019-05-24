@@ -48,7 +48,7 @@ public class UserLoop {
 		System.out.print(
 				String.format("\n%s%s Corpus%s\n\n", Node.BOLD, UserLoop.taxonomy.name, Node.END));
 		System.out.print("Most significant terms:\n\n");
-		Object[] actTerms = UserLoop.taxonomy.getActTerms();
+		Object[] actTerms = UserLoop.taxonomy.getMostSignificantTerms();
 		for (Object technology : actTerms) {
 			idx++;
 			Technology t2 = (Technology) technology;

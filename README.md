@@ -14,10 +14,10 @@ Creating a taxonomy requires a list of terms with technology scores, feature vec
 | filename | description |
 | --- | --- |
 | classify.MaxEnt.out.s4.scores.sum.az | list of terms |
-| feastures.txt.gz | feature vectors for all terms |
+| features.txt.gz | feature vectors for all terms |
 | NB.IG50.test1.woc.9999.results.classes | list of terms with their roles |
 
-*TODO: add an explanation on how to generate these files.*
+The first of those files is created by running the feature extraction and technology classifier over a corpus (see https://github.com/techknowledgist/tgist-features and https://github.com/techknowledgist/tgist-classifiers). The second can be created from the feature vectors created by tgist-features using the `extract_features.py` script. The third is created with the domain roles code in https://github.com/techknowledgist/act, this file is allowed to be empty.
 
 
 ### Creating a taxonomy

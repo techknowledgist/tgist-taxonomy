@@ -26,6 +26,7 @@ public class TaxonomyLoader {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
+
 	public static Properties loadProperties(String pFile)
 			throws FileNotFoundException, IOException
 	{
@@ -43,6 +44,7 @@ public class TaxonomyLoader {
 	 * @param taxonomy
 	 * @throws FileNotFoundException
 	 */
+
 	public static void loadTechnologies(String tFile, Taxonomy taxonomy)
 			throws FileNotFoundException
 	{
@@ -61,19 +63,22 @@ public class TaxonomyLoader {
 		}
 	}
 
-	public static void loadACT(String aFile, Taxonomy taxonomy)
+	public static void loadRoles(String rolesFile, Taxonomy taxonomy)
 			throws FileNotFoundException
 	{
-		if (new File(aFile).isFile()) {
+		if (new File(rolesFile).isFile()) {
 			System.out.println("Reading ACT terms...");
-			FileInputStream inputStream = new FileInputStream(aFile);
+			FileInputStream inputStream = new FileInputStream(rolesFile);
 			Scanner sc = new Scanner(inputStream, "UTF-8");
+			//System.out.println(aFile);
 			while (sc.hasNextLine()) {
 				String line = sc.nextLine();
 				String[] fields = line.split("\t");
-				String term = fields[0];
+				String role = fields[0];
+				String term = fields[1];
 				Technology technology = taxonomy.technologies.get(term);
-				taxonomy.acts.add(technology);
+				technology.role = role;
+				taxonomy.roles.add(technology);
 			}
 		}
 
@@ -86,6 +91,7 @@ public class TaxonomyLoader {
 	 * @param taxonomy
 	 * @throws FileNotFoundException
 	 */
+
 	public static void loadFeatures(String vFile, Taxonomy taxonomy)
 			throws FileNotFoundException
 	{
@@ -203,7 +209,7 @@ public class TaxonomyLoader {
 	 * a few conditions on minimal frequency and minimal technology score.
 	 *
 	 * This adds the technologies to the technologies field but does not save them
-	 * to disk, for the latter we use TaxonomyWriter.writeTechnologies().
+	 * to disk, for the latter we use TaxonomyWriter.writeTerms().
 	 *
 	 * @param termsFile
 	 * @param taxonomy
@@ -213,13 +219,12 @@ public class TaxonomyLoader {
 	 * @throws UnsupportedEncodingException
 	 * @throws IOException
 	 */
-	public static void importTechnologies(
+
+	public static void importTerms(
 			String termsFile, Taxonomy taxonomy, float minTechScore, int minCount)
 			throws FileNotFoundException, UnsupportedEncodingException, IOException
 	{
-		FileInputStream fileStream = new FileInputStream(termsFile);
-		Reader decoder = new InputStreamReader(fileStream, StandardCharsets.UTF_8);
-		BufferedReader reader = new BufferedReader(decoder);
+		BufferedReader reader = getReader(termsFile);
 		String line;
 		while ((line = reader.readLine()) != null) {
 			String[] fields = line.split("\t");
@@ -246,31 +251,28 @@ public class TaxonomyLoader {
 	 * @throws IOException
 	 */
 
-	public static void importACTS(
+	public static void importRoles(
 			String actsFile, Taxonomy taxonomy)
 			throws FileNotFoundException, UnsupportedEncodingException, IOException
 	{
-		FileInputStream fileStream = new FileInputStream(actsFile);
-		Reader decoder = new InputStreamReader(fileStream, StandardCharsets.UTF_8);
-		BufferedReader reader = new BufferedReader(decoder);
+		BufferedReader reader = getReader(actsFile);
 		String line;
 		int c = 0;
 		while ((line = reader.readLine()) != null) {
 			String[] fields = line.split("\t");
 			String term = fields[0].replace('_', ' ');
-			String act = fields[1];
-			//System.out.println(term, act);
+			String role = fields[1];
 			Technology technology = taxonomy.technologies.get(term);
-			if (technology == null)
-				continue;
-			// Would like to do a test for the role (act.equals("t")), but for
-			// now we take them all since with these data we do not have enough
-			// technologies that qualify as a task.
 			// TODO: we have 5305 roles, but only 279 of those are technologies
 			// TODO: ... why so few? (this is for SignalProcessing data)
+			// TODO: Would like to do a test for the role (act.equals("t")), but
+			// TODO: ... for now we take them all since with these data we do not
+			// TODO: ... have enough technologies that qualify as a task.
+			if (technology == null)
+				continue;
 			c++;
-			taxonomy.acts.add(technology);
-			//System.out.println(act + technology);
+			technology.role = role;
+			taxonomy.roles.add(technology);
 		}
 		System.out.println(
 				String.format("Imported %d ACT classes", c));
@@ -284,7 +286,7 @@ public class TaxonomyLoader {
 	 * are added if the vector is for a term that occurs in the taxonomy as a
 	 * technology. The vectors are assumed to be in a gzipped file.
 	 *
-	 * Unlike importTechnologies(), this method does not save the loaded data in
+	 * Unlike importTerms(), this method does not save the loaded data in
 	 * a local field, instead it writes the vectors it wants to keep immediately
 	 * to the disk. This is because for larger corpora the list of features gets
 	 * to be too large to keep in memory.
@@ -292,6 +294,7 @@ public class TaxonomyLoader {
 	 * @param featuresFile
 	 * @throws IOException
 	 */
+
 	public static void importFeatures(String featuresFile, Taxonomy taxonomy)
 			throws IOException
 	{
@@ -325,6 +328,24 @@ public class TaxonomyLoader {
 		System.out.println(String.format("Imported %d vectors", vectorsAdded));
 	}
 
+
+	/**
+	 * Utility to help read a file.
+	 *
+	 * @param fileName
+	 * @return A BufferedReader for fileName
+	 * @throws FileNotFoundException
+	 */
+
+	public static BufferedReader getReader(String fileName)
+			throws FileNotFoundException
+	{
+		FileInputStream fileStream = new FileInputStream(fileName);
+		Reader decoder = new InputStreamReader(fileStream, StandardCharsets.UTF_8);
+		BufferedReader reader = new BufferedReader(decoder);
+		return reader;
+	}
+
 	/**
 	 * Utility to help read a gzipped file.
 	 *
@@ -333,6 +354,7 @@ public class TaxonomyLoader {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
+
 	static BufferedReader getGzipReader(String fileName)
 			throws FileNotFoundException, IOException
 	{

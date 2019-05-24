@@ -9,12 +9,12 @@ import java.util.logging.Logger;
 
 public class TaxonomyApp {
 
-	static String DATA, CORPUS, TAXONOMY;
-
 	public static void main(String[] args) {
 
 		if (args.length == 1 && args[0].equals("--help"))
 			printUsage();
+		else if (args.length == 3 && args[0].equals("--create"))
+			create(args[1], args[2]);
 		else if (args.length == 3 && args[0].equals("--init"))
 			initialize(args[1], args[2]);
 		else if (args.length == 2 && args[0].equals("--import"))
@@ -23,8 +23,6 @@ public class TaxonomyApp {
 			buildHierarchy(args[1]);
 		else if (args.length == 2 && args[0].equals("--add-relations"))
 			addRelations(args[1]);
-		else if (args.length == 3 && args[0].equals("--create"))
-			create(args[1], args[2]);
 		else if (args.length == 2  && args[0].equals("--browse"))
 			userLoop(args[1]);
 		else
@@ -35,13 +33,14 @@ public class TaxonomyApp {
 	 * Method for running the code in development mode, used if no arguments
 	 * are given.
 	 */
+
 	private static void test()
 	{
-		//printUsage();
-		//CORPUS = "Thyme";
-		CORPUS = "SignalProcessing";
-		TAXONOMY = "taxonomies/" + CORPUS;
-		DATA = "/DATA/techwatch/" + CORPUS;
+		//String corpus = "Thyme";
+		String corpus = "SignalProcessing";
+		//String corpus = "Networking";
+		String taxonomy = "/DATA/techwatch/taxonomies/" + corpus;
+		String data = "/DATA/techwatch/data/" + corpus;
 
 		boolean runCreate = false;
 		boolean runInitialization = false;
@@ -49,15 +48,16 @@ public class TaxonomyApp {
 		boolean runBuildHierarchy = false;
 		boolean runAddRelations = false;
 		boolean runExport = false;
-		boolean runLoop = false;
+		boolean runLoop = true;
 
-		if (runCreate) create(TAXONOMY, DATA);
-		if (runInitialization) initialize(TAXONOMY, DATA);
-		if (runImport) importData(TAXONOMY);
-		if (runBuildHierarchy) buildHierarchy(TAXONOMY);
-		if (runAddRelations) addRelations(TAXONOMY);
-		if (runExport) exportSQL(TAXONOMY);
-		if (runLoop) userLoop(TAXONOMY);
+		System.out.println(taxonomy);
+		if (runCreate) create(taxonomy, data);
+		if (runInitialization) initialize(taxonomy, data);
+		if (runImport) importData(taxonomy);
+		if (runBuildHierarchy) buildHierarchy(taxonomy);
+		if (runAddRelations) addRelations(taxonomy);
+		if (runExport) exportSQL(taxonomy);
+		if (runLoop) userLoop(taxonomy);
 	}
 
 	private static void printUsage() {
@@ -93,6 +93,7 @@ public class TaxonomyApp {
 	 * @param taxonomyName
 	 * @param taxonomyLocation
 	 */
+
 	private static void create(String taxonomyLocation, String dataLocation)
 	{
 		printProgress(">>> Creating " + taxonomyLocation);
@@ -107,6 +108,7 @@ public class TaxonomyApp {
 	 * @param taxonomyLocation path to the location of the taxonomy
 	 * @param dataLocation path to the location of the data for the taxonomy
 	 */
+
 	private static void initialize(String taxonomyLocation, String dataLocation)
 	{
 		printProgress(">>> Initializing taxonomy in " + taxonomyLocation);
@@ -124,6 +126,7 @@ public class TaxonomyApp {
 	 *
 	 * @param taxonomy the path to the taxonomy
 	 */
+
 	private static void importData(String taxonomy)
 	{
 		try {
@@ -142,6 +145,7 @@ public class TaxonomyApp {
 	 *
 	 * @param taxonomyDir path to the taxonomy
 	 */
+
 	private static void buildHierarchy(String taxonomyDir)
 	{
 		try {
@@ -159,6 +163,7 @@ public class TaxonomyApp {
 	 *
 	 * @param taxonomyDir path to the taxonomy
 	 */
+
 	private static void addRelations(String taxonomyDir)
 	{
 		try {
@@ -171,9 +176,9 @@ public class TaxonomyApp {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }
 	}
 
-	// TODO: this does not appear to work
 	private static void	exportSQL(String taxonomyDir)
 	{
+		// TODO: this does not appear to work
 		try {
 			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
 			taxonomy.loadRelations();

@@ -13,6 +13,7 @@ public class Technology implements Comparable {
 	String name;
 	int count;
 	float score;
+	String role;
 	List<Technology> hypernyms;
 	List<Technology> hyponyms;
 	List<IsaRelation> isaRelations;
