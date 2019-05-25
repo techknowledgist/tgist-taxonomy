@@ -53,7 +53,6 @@ public class Technology implements Comparable {
 		}
 	}
 
-	// TODO: using relType seems rather useless
 	public void addCooccurrenceRelation(Technology tech) {
 		if (this.relations.containsKey(tech.name)) {
 			this.relations.get(tech.name).count++;

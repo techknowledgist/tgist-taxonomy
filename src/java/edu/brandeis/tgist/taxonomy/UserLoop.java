@@ -33,7 +33,7 @@ public class UserLoop {
 				if (term.matches("^\\d+$")) {
 					int idx = Integer.parseInt(term);
 					term = mappings.get(idx); }
-				Technology tech = UserLoop.taxonomy.technologies.get(term);
+				Technology tech = UserLoop.taxonomy.terms.get(term);
 				if (tech == null)
 					System.out.println("Not in taxonomy");
 				else

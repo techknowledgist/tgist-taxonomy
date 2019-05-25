@@ -159,7 +159,7 @@ public class TaxonomyApp {
 
 	/**
 	 * Add relations to the taxonomy. The taxonomy is assumed to have imported
-	 * all technologies and feature vectors (that is, the contexts of the terms).
+	 * all terms and feature vectors (that is, the contexts of the terms).
 	 *
 	 * @param taxonomyDir path to the taxonomy
 	 */
@@ -178,10 +178,8 @@ public class TaxonomyApp {
 
 	private static void	exportSQL(String taxonomyDir)
 	{
-		// TODO: this does not appear to work
 		try {
 			Taxonomy taxonomy = openTaxonomy(taxonomyDir);
-			taxonomy.loadRelations();
 			taxonomy.exportTables();
 		} catch (IOException ex) {
 			Logger.getLogger(TaxonomyApp.class.getName()).log(Level.SEVERE, null, ex); }

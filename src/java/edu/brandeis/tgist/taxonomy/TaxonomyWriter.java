@@ -36,7 +36,7 @@ public class TaxonomyWriter {
 	}
 
 	/**
-	 * Write technologies to disk.
+	 * Write terms to disk.
 	 *
 	 * @param termsFile The File to write to.
 	 * @param technologies Map with Technology instances to write to disk.
@@ -96,9 +96,9 @@ public class TaxonomyWriter {
 
 	/**
 	 * Write the hierarchy to disk. All that is written are the isa relations for
-	 * those technologies that have them. Note that isa relations are only stored
-	 * on the source technologies, that is, we store isa(dog, animal) but we do not
-	 * store isa(animal, dog).
+ those terms that have them. Note that isa relations are only stored
+ on the source terms, that is, we store isa(dog, animal) but we do not
+ store isa(animal, dog).
 	 *
 	 * @param hierarchyFile
 	 * @param taxonomy
@@ -111,7 +111,7 @@ public class TaxonomyWriter {
 		try (OutputStreamWriter writer =
 				new OutputStreamWriter(
 					new FileOutputStream(hierarchyFile), StandardCharsets.UTF_8)) {
-			for (Technology technology : taxonomy.technologies.values()) {
+			for (Technology technology : taxonomy.terms.values()) {
 				if (technology.isaRelations.size() > 0) {
 					writer.write(technology.name + "\n");
 					for (IsaRelation isa : technology.isaRelations)
@@ -130,7 +130,7 @@ public class TaxonomyWriter {
 		try (OutputStreamWriter writer =
 				new OutputStreamWriter(
 					new FileOutputStream(relationsFile), StandardCharsets.UTF_8)) {
-			for (Technology technology : taxonomy.technologies.values()) {
+			for (Technology technology : taxonomy.terms.values()) {
 				if (technology.relations.size() > 0) {
 					writer.write(technology.name + "\n");
 					for (String relatedTech : technology.relations.keySet()) {
@@ -151,7 +151,7 @@ public class TaxonomyWriter {
 		try (OutputStreamWriter writer =
 				new OutputStreamWriter(
 					new FileOutputStream(relationsFile), StandardCharsets.UTF_8)) {
-			for (Technology technology : taxonomy.technologies.values()) {
+			for (Technology technology : taxonomy.terms.values()) {
 				if (technology.termRelations.size() > 0) {
 					for (TermRelation rel : technology.termRelations) {
 						writer.write(String.format("%s\t%s\t%s\t%s\t%s\n", rel.document, rel.pred,
@@ -162,47 +162,68 @@ public class TaxonomyWriter {
 		}
 	}
 
-	// TODO: the following few methods have a lot of overlap, do something nicer
+	/**
+	 * Write SQL dump of terms.
+	 *
+	 * Terms are read from the taxonomy.terms instance variable.
+	 *
+	 * @param tax
+	 * @param fileName
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 
 	public static void writeTermsAsTable(Taxonomy tax, String fileName)
 			throws FileNotFoundException, IOException
 	{
 		System.out.println("Creating SQL export for terms...");
-		BufferedReader reader = getReader(txtFile(tax.location, fileName));
-		BufferedWriter writer = getWriter(sqlFile(tax.location, fileName));
-		try {
-			while (true) {
-				String line = reader.readLine();
-				if (line == null) break;
-				insertStatementForTechnologiesTable(writer, line);
-			}
-		} finally {
-			if (reader != null) reader.close();
-			if (writer != null) writer.close();
+		try (BufferedWriter writer = getWriter(sqlFile(tax.location, fileName))) {
+			for (Technology term : tax.terms.values()) {
+				String sql = String.format(
+						"INSERT INTO technologies VALUES (%s, %.6s, %s);\n",
+						quote(term.name), term.score, term.count);
+				writer.write(sql); }
 		}
 	}
+
+	/**
+	 * Write SQL dump of isa hierarchy.
+	 *
+	 * ISA relations are read from the isaRelations variable of the terms in the
+	 * taxonomy.terms instance variable.
+	 *
+	 * @param tax
+	 * @param fileName
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 
 	public static void writeHierarchyAsTable(Taxonomy tax, String fileName)
 			throws FileNotFoundException, IOException
 	{
 		System.out.println("Creating SQL export for isa relations...");
-		BufferedReader reader = getReader(txtFile(tax.location, fileName));
-		BufferedWriter writer = getWriter(sqlFile(tax.location, fileName));
-		try {
-			String currentTerm = null;
-			while (true) {
-				String line = reader.readLine();
-				if (line == null) break;
-				if (line.startsWith("\t")) {
-					insertStatementForHierarchyTable(writer, currentTerm, line);
-				} else {
-					currentTerm = line.trim(); }
-			}
-		} finally {
-			if (reader != null) reader.close();
-			if (writer != null) writer.close();
+		try (BufferedWriter writer2 = getWriter(sqlFile(tax.location, fileName))) {
+			for (Technology term : tax.terms.values()) {
+				for (IsaRelation isa : term.isaRelations) {
+					String sql = String.format(
+							"INSERT INTO hierarchy VALUES (%s, %s, %s, %s);\n",
+							quote(isa.source.name), quote("isa"), quote("rhhr"),
+							quote(isa.target.name));
+					writer2.write(sql); }}
 		}
 	}
+
+	/**
+	 * Write SQL dump of cooccurrence relations.
+	 *
+	 * Relations are read from disk instead of from memory since this slightly
+	 * simplified the code.
+	 *
+	 * @param tax
+	 * @param fileName
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 
 	public static void writeCoocRelationsAsTable(Taxonomy tax, String fileName)
 			throws FileNotFoundException, IOException
@@ -210,22 +231,37 @@ public class TaxonomyWriter {
 		System.out.println("Creating SQL export for cooccurrence relations...");
 		BufferedReader reader = getReader(txtFile(tax.location, fileName));
 		BufferedWriter writer = getWriter(sqlFile(tax.location, fileName));
-		try {
-			String currentTerm = null;
-			while (true) {
-				String line = reader.readLine();
-				if (line == null) break;
-				if (line.startsWith("\t")) {
-					insertStatementForCoocRelationsTable(writer, currentTerm, line);
-					//writer.write(currentTerm + line + "\n");
-				} else {
-					currentTerm = line.trim(); }
-			}
-		} finally {
-			if (reader != null) reader.close();
-			if (writer != null) writer.close();
+		String currentTerm = null;
+		while (true) {
+			String line = reader.readLine();
+			if (line == null) break;
+			if (line.startsWith("\t")) {
+				String[] fields = line.trim().split("\t");
+				String sql = String.format(
+						"INSERT INTO relations_cooc VALUES (%s, %s, %s, %s);\n",
+						quote(currentTerm),	// source term
+						fields[0],			// count
+						fields[1],			// mutual information
+						quote(fields[2]));	// target term
+				writer.write(sql);
+			} else {
+				currentTerm = line.trim(); }
 		}
+		reader.close();
+		writer.close();
 	}
+
+	/**
+	 * Write SQL dump of term relations.
+	 *
+	 * Relations are read from disk instead of from memory since this slightly
+	 * simplified the code.
+	 *
+	 * @param tax
+	 * @param fileName
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 
 	public static void writeTermRelationsAsTable(Taxonomy tax, String fileName)
 			throws FileNotFoundException, IOException
@@ -233,16 +269,21 @@ public class TaxonomyWriter {
 		System.out.println("Creating SQL export for term relations...");
 		BufferedReader reader = getReader(txtFile(tax.location, fileName));
 		BufferedWriter writer = getWriter(sqlFile(tax.location, fileName));
-		try {
-			while (true) {
-				String line = reader.readLine();
-				if (line == null) break;
-				insertStatementForTermRelationsTable(writer, line);
-			}
-		} finally {
-			if (reader != null) reader.close();
-			if (writer != null) writer.close();
+		while (true) {
+			String line = reader.readLine();
+			if (line == null) break;
+			String[] fields = line.trim().split("\t", 5);
+			String s = String.format(
+					"INSERT INTO relations_term VALUES (%s, %s, %s, %s, %s);\n",
+					quote(fields[0]),	// document
+					quote(fields[1]),	// predicate
+					quote(fields[2]),	// source term
+					quote(fields[3]),	// target term
+					quote(fields[4]));	// context
+			writer.write(s);
 		}
+		reader.close();
+		writer.close();
 	}
 
 	private static String txtFile(String directory, String filename)
@@ -272,69 +313,6 @@ public class TaxonomyWriter {
 				new OutputStreamWriter(stream, StandardCharsets.UTF_8));
 	}
 
-	private static void insertStatementForTechnologiesTable(
-			BufferedWriter writer, String line)
-			throws IOException
-	{
-		if (line.startsWith("\t")) return;
-		String[] fields = line.trim().split("\t");
-		String techName = quote(fields[0]);
-		if (techName.endsWith(" ")) return;
-		if (techName.contains("  ")) return;
-		if (techName.endsWith("^")) return;
-		String s = String.format(
-				"INSERT INTO technologies VALUES (%s, %s, %s);\n",
-				techName,		// name
-				fields[1],		// tscore
-				fields[2]);		// count
-		writer.write(s);
-	}
-
-	private static void insertStatementForHierarchyTable(
-			BufferedWriter writer, String currentTerm, String line)
-			throws IOException
-	{
-		String[] fields = line.trim().split("\t");
-		String s = String.format(
-				"INSERT INTO hierarchy VALUES (%s, %s, %s, %s);\n",
-				quote(currentTerm), // source
-				quote(fields[0]),	// type
-				quote(fields[1]),	// subtype
-				quote(fields[2]));	// target
-		writer.write(s);
-	}
-
-	private static void insertStatementForCoocRelationsTable(
-			BufferedWriter writer, String currentTerm, String line)
-			throws IOException
-	{
-		String[] fields = line.trim().split("\t");
-		String s = String.format(
-				"INSERT INTO relations_cooc VALUES (%s, %s, %s, %s);\n",
-				quote(currentTerm), // source
-				fields[0],			// count
-				fields[1],			// mi
-				quote(fields[2]));	// target
-		writer.write(s);
-	}
-
-	private static void insertStatementForTermRelationsTable(
-			BufferedWriter writer, String line)
-			throws IOException
-	{
-		String[] fields = line.trim().split("\t", 5);
-		if (fields[1].equals("taken_from"))
-			System.out.println(String.join(" --- ", fields));
-		String s = String.format(
-				"INSERT INTO relations_term VALUES (%s, %s, %s, %s, %s);\n",
-				quote(fields[0]),		// document
-				quote(fields[1]),		// pred
-				quote(fields[2]),		// source
-				quote(fields[3]),		// target
-				quote(fields[4]));		// context
-		writer.write(s);
-	}
-
 	private static String quote(String text)
 	{
 		text = text.replace("\\", "\\\\");
@@ -346,7 +324,7 @@ public class TaxonomyWriter {
 			throws FileNotFoundException, IOException
 	{
 		BufferedWriter writer = getWriter(outFile);
-		for (Technology technology : taxonomy.technologies.values()) {
+		for (Technology technology : taxonomy.terms.values()) {
 			technology.writeHierarchyFragment(writer, "");
 		}
 	}

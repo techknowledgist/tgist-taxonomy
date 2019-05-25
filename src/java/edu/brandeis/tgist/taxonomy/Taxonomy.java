@@ -19,12 +19,12 @@ import java.util.logging.Logger;
  * Core class where taxonomy manipulations and taxonomy access occurs.
  *
  * A taxonomy has a name but is really defined defined by its location. It knows
- * where it has stored its main elements: taxonomy meta data, technologies, features,
+ * where it has stored its main elements: taxonomy meta data, terms, features,
  * hierarchy and relations. Technologies and features are imported from the
  * outside (created by tgist-features and tgist-classifiers) , the hierarchy
  * and the term relations are created by this class.
  *
- * The current implementation is static. You import technologies and features once
+ * The current implementation is static. You import terms and features once
  * and you generate hierarchy and relations once. There is not yet any incremental
  * updating.
  */
@@ -46,10 +46,10 @@ public class Taxonomy {
 	/** The name of the file that stores the hierarchical relations. */
 	public static final String HIERARCHY_FILE = "hierarchy.txt";
 
-	/** The name of the file that stores cooccurrence relations between technologies. */
+	/** The name of the file that stores cooccurrence relations between terms. */
 	public static final String RELATIONS_FILE = "relations-cooc.txt";
 
-	/** The name of the file that stores term relations between technologies. */
+	/** The name of the file that stores term relations between terms. */
 	public static final String TERM_RELATIONS_FILE = "relations-term.txt";
 
 	/** The name of the file with input terms. */
@@ -76,7 +76,7 @@ public class Taxonomy {
 	public String name;
 	public String location;
 	public String data;
-	public HashMap<String, Technology> technologies;
+	public HashMap<String, Technology> terms;
 	public List<Technology> roles;
 	public List<FeatureVector> features;
 
@@ -85,13 +85,13 @@ public class Taxonomy {
 	 * Create a new taxonomy. Creates a new directory and initializes the taxonomy,
 	 * which includes writing a properties file.
 	 *
-	 * The technologies and features are created externally to the taxonomy code
+	 * The terms and features are created externally to the taxonomy code
 	 * so they need to be imported after technology initialization:
 	 *
 	 *		Taxonomy tax = new Taxonomy(taxonomyName, taxonomyLocation);
 	 *		tax.importData();
 	 *
-	 * This needs to be done only once since both technologies and features are
+	 * This needs to be done only once since both terms and features are
 	 * available internally after inportData().
 	 *
 	 * @param taxonomyLocation path to the taxonomy.
@@ -117,7 +117,7 @@ public class Taxonomy {
 
 	/**
 	 * Open an existing taxonomy and load it into memory. This includes
-	 * technologies, ACT terms and the hierarchy. Features and the relations
+	 * terms, ACT terms and the hierarchy. Features and the relations
 	 * are not loaded by this constructor.
 	 *
 	 * @param taxonomyLocation The location of the taxonomy.
@@ -132,6 +132,12 @@ public class Taxonomy {
 		this.name = properties.getProperty("name");
 		this.data = properties.getProperty("data");
 		this.location = taxonomyLocation;
+		loadData();
+	}
+
+	private void loadData()
+			throws FileNotFoundException
+	{
 		initializeData();
 		String tFile = this.location + File.separator + TERMS_FILE;
 		String rFile = this.location + File.separator + ROLES_FILE;
@@ -142,11 +148,12 @@ public class Taxonomy {
 	}
 
 	/**
-	 * Initialize technologies, roles and features to empty maps and lists.
+	 * Initialize terms, roles and features to empty maps and lists.
 	 */
+
 	private void initializeData()
 	{
-		this.technologies = new HashMap<>();
+		this.terms = new HashMap<>();
 		this.roles = new ArrayList<>();
 		this.features = new ArrayList<>();
 	}
@@ -156,6 +163,7 @@ public class Taxonomy {
 	 * exists.
 	 * @param taxonomyLocation path to the taxonomy
 	 */
+
 	private void checkTaxonomyExistence(String taxonomyLocation)
 	{
 		if (Files.exists(Paths.get(taxonomyLocation))) {
@@ -192,10 +200,11 @@ public class Taxonomy {
 	 *
 	 * @return
 	 */
+
 	public Object[] getMostSignificantTerms()
 	{
-		// TODO: Seriously reconsider this, could use:
-		// TODO: Object[] terms = this.technologies.values().toArray();
+		// Use the following if you want to get the most frequent terms overall
+		// Object[] terms = this.terms.values().toArray();
 		Object[] terms = this.roles.toArray();
 		Arrays.sort(terms);
 		return terms.length <= NUMBER_OF_TERMS
@@ -208,7 +217,7 @@ public class Taxonomy {
 	{
 		return String.format("<taxonomy.Taxonomy %s terms=%d relations=%d>",
 				this.name,
-				this.technologies.size(),
+				this.terms.size(),
 				countRelations());
 	}
 
@@ -278,7 +287,7 @@ public class Taxonomy {
 		TaxonomyLoader.importRoles(rolesFile, this);
 		TaxonomyLoader.importFeatures(featuresFile, this);
 		//cp.report("importData");
-		TaxonomyWriter.writeTerms(tFile, this.technologies);
+		TaxonomyWriter.writeTerms(tFile, this.terms);
 		TaxonomyWriter.writeRoles(rFile, this.roles);
 		TaxonomyWriter.writeFeatures(fFile, this.features);
 	}
@@ -298,7 +307,7 @@ public class Taxonomy {
 
 	/**
 	 * Apply the righthand head rule to elements in the taxonomy. As a result,
-	 * instances of IsaRelation are added to technologies such that if isa(t1,t2)
+	 * instances of IsaRelation are added to terms such that if isa(t1,t2)
 	 * appears as a IsaRelation on both t1 and t1. In addition, if isa(t1,t2) then
 	 * t1 is added as a hypernym to t2 and t2 is added as a hyponym to t1.
 	 *
@@ -314,7 +323,7 @@ public class Taxonomy {
 		// tokens, a node Node("door") would be added as a direct child of Top
 		// and a node Node("iron door") would be added as an immediate child of
 		// Node("door"). Nodes can be associated with an instance of Technology.
-		for (Technology tech : this.technologies.values()) {
+		for (Technology tech : this.terms.values()) {
 			c++;
 			//if (c > 100) break;
 			//System.out.println("\n" + tech.name);
@@ -329,7 +338,7 @@ public class Taxonomy {
 	}
 
 	/**
-	 * Add relations to technologies in the ontology. Creates a sliding window
+	 * Add relations to terms in the ontology. Creates a sliding window
 	 * over the terms and stipulate that there is a cooccurrence relation if terms
 	 * cooccur in that window.
 	 *
@@ -347,14 +356,14 @@ public class Taxonomy {
 			c++;
 			//if (c > 1000) break;
 			window.update(vector);
-			// TODO: this only works as expected because the window only has two
-			// terms in it, we will get duplication when that changes
+			// TODO: This only works as expected because the window only has two
+			// TODO: ... terms in it, we will get duplication when that changes
 			for (String[] p : window.cooccurrencePairs()) {
 				//System.out.println("  " + p[0] + " - " + p[1]);
-				Technology t1 = this.technologies.get(p[0]);
-				Technology t2 = this.technologies.get(p[1]);
+				Technology t1 = this.terms.get(p[0]);
+				Technology t2 = this.terms.get(p[1]);
 				relationCount++;
-				// These are stored on both source and target technologies
+				// These are stored on both source and target terms
 				// (as opposed to isa relations, which go only one way)
 				t1.addCooccurrenceRelation(t2);
 				t2.addCooccurrenceRelation(t1);
@@ -389,8 +398,8 @@ public class Taxonomy {
 	}
 
 	/**
-	 * Collect all technologies and group them by document name. This allows us
-	 * to collect relations between technologies on a document by document basis.
+	 * Collect all terms and group them by document name. This allows us
+	 * to collect relations between terms on a document by document basis.
 	 *
 	 * Note. This is now depricated since we use the CooccurrenceWindow class. Using
 	 * this method did not make sense for large corpora with large files.
@@ -409,31 +418,37 @@ public class Taxonomy {
 		groupedTechnologies = new HashMap<>();
 		for (FeatureVector vector : this.features) {
 			// NOTE: a technology might occur multiple times in a document
-			// TODO: should probably group the vectors and not the technologies
+			// TODO: should probably group the vectors and not the terms
 			groupedTechnologies
 					.putIfAbsent(vector.fileName, new ArrayList<>());
 			groupedTechnologies
 					.get(vector.fileName)
-					.add(this.technologies.get(vector.term));
+					.add(this.terms.get(vector.term));
 		}
 		return groupedTechnologies;
 	}
 
-	void filterRelations()
+	private void filterRelations()
 	{
-		for (Technology technology : this.technologies.values()) {
+		for (Technology technology : this.terms.values()) {
 			technology.filterRelations(); }
 	}
 
-	int countRelations()
+	private int countRelations()
 	{
 		int count = 0;
-		for (Technology technology : this.technologies.values())
+		for (Technology technology : this.terms.values())
 			count += technology.relations.size();
 		return count;
 	}
 
-	void exportTables() throws IOException
+	/**
+	 * Write SQL dumps for terms, hierarchy and relations.
+	 *
+	 * @throws IOException
+	 */
+
+	public void exportTables() throws IOException
 	{
 		TaxonomyWriter.writeTermsAsTable(this, TERMS_FILE);
 		TaxonomyWriter.writeHierarchyAsTable(this, HIERARCHY_FILE);
@@ -443,10 +458,10 @@ public class Taxonomy {
 
 	private void calculateMutualInformation()
 	{
-		int n = this.technologies.size();
+		int n = this.terms.size();
 		boolean debug = false;
 		int c = 0;
-		for (Technology t1 : this.technologies.values()) {
+		for (Technology t1 : this.terms.values()) {
 			c++;
 			if (debug && c < 10) {
 				System.out.println();
@@ -454,7 +469,7 @@ public class Taxonomy {
 			int c2 = 0;
 			for (String t2_name : t1.relations.keySet()) {
 				c2++;
-				Technology t2 = this.technologies.get(t2_name);
+				Technology t2 = this.terms.get(t2_name);
 				CooccurrenceRelation rel = t1.relations.get(t2_name);
 				float mi = mutualInformation(n, t1, t2, rel);
 				rel.mi = mi;
@@ -487,6 +502,7 @@ public class Taxonomy {
 	 * @param vectors
 	 * @return the name of the predicate or null
 	 */
+
 	private String predicateFromVectorMerge(ArrayList<FeatureVector> vectors)
 	{
 		FeatureVector v1 = vectors.get(0);

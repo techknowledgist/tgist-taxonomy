@@ -38,7 +38,7 @@ public class TaxonomyLoader {
 	}
 
 	/**
-	 * Load the technologies from disk.
+	 * Load the terms from disk.
 	 *
 	 * @param tFile
 	 * @param taxonomy
@@ -58,7 +58,7 @@ public class TaxonomyLoader {
 				String term = fields[0];
 				float score = Float.parseFloat(fields[1]);
 				int count = Integer.parseInt(fields[2]);
-				taxonomy.technologies.put(term, new Technology(term, score, count));
+				taxonomy.terms.put(term, new Technology(term, score, count));
 			}
 		}
 	}
@@ -76,7 +76,7 @@ public class TaxonomyLoader {
 				String[] fields = line.split("\t");
 				String role = fields[0];
 				String term = fields[1];
-				Technology technology = taxonomy.technologies.get(term);
+				Technology technology = taxonomy.terms.get(term);
 				technology.role = role;
 				taxonomy.roles.add(technology);
 			}
@@ -129,17 +129,18 @@ public class TaxonomyLoader {
 				//System.out.println(" ==> "+line);
 				String[] fields = line.trim().split("\t");
 				if (fields.length == 1) {
-					currentTechnology = taxonomy.technologies.get(fields[0]);
+					currentTechnology = taxonomy.terms.get(fields[0]);
 					//System.out.println("  "+currentTechnology);
 				} else {
 					//System.out.println("  "+fields[0]);
 					String reltype = fields[1];
-					Technology target = taxonomy.technologies.get(fields[2]);
+					Technology target = taxonomy.terms.get(fields[2]);
 					// Sometimes the technology is null (and I assume that the target
 					// can also be null). Skip these cases.
-					// TODO: this is usually when the technology starts/end with
-					// a space or tab, take care of those when first importing
-					// technologies
+					// TODO: This is usually when the technology starts/end with
+					// TODO: ... a space or tab, take care of those when first
+					// TODO: ... importing terms or in the candidate
+					// TODO: ... selection phase of feature generation
 					if (currentTechnology != null && target != null) {
 						IsaRelation isa = new IsaRelation(reltype, currentTechnology, target);
 						currentTechnology.isaRelations.add(isa);
@@ -163,11 +164,14 @@ public class TaxonomyLoader {
 				String line = sc.nextLine();
 				String[] fields = line.trim().split("\t");
 				if (fields.length == 1) {
-					currentTechnology = taxonomy.technologies.get(fields[0]);
+					currentTechnology = taxonomy.terms.get(fields[0]);
 				} else {
 					int count = Integer.parseInt(fields[0]);
 					float mi = Float.parseFloat(fields[1]);
-					Technology target = taxonomy.technologies.get(fields[2]);
+					Technology target = taxonomy.terms.get(fields[2]);
+					if (currentTechnology == null) {
+						System.out.println("WARNING: no currentTechnology");
+						continue; }
 					currentTechnology.addCooccurrenceRelation(count, mi, target);
 					target.addCooccurrenceRelation(count, mi, currentTechnology);
 				}
@@ -189,8 +193,8 @@ public class TaxonomyLoader {
 				String pred = fields[1];
 				String term1 = fields[2];
 				String term2 = fields[3];
-				Technology source = taxonomy.technologies.get(term1);
-				Technology target = taxonomy.technologies.get(term2);
+				Technology source = taxonomy.terms.get(term1);
+				Technology target = taxonomy.terms.get(term2);
 				TermRelation rel = new TermRelation(doc, pred, source, target);
 				for (int i = 4 ;  i < fields.length ; i++)
 					rel.addContextElement(fields[i]);
@@ -201,14 +205,14 @@ public class TaxonomyLoader {
 	}
 
 	/**
-	 * Read and add technologies from a file with terms.
+	 * Read and add terms from a file with terms.
 	 *
 	 * The input file includes the normalized term name (all lower case), the
 	 * term count and the technology score. This file is external to the taxonomy
 	 * and the terms in the file will be added to the taxonomy if the terms meet
 	 * a few conditions on minimal frequency and minimal technology score.
 	 *
-	 * This adds the technologies to the technologies field but does not save them
+	 * This adds the terms to the terms field but does not save them
 	 * to disk, for the latter we use TaxonomyWriter.writeTerms().
 	 *
 	 * @param termsFile
@@ -229,15 +233,18 @@ public class TaxonomyLoader {
 		while ((line = reader.readLine()) != null) {
 			String[] fields = line.split("\t");
 			String term = fields[0];
+			// filter out some wacko terms
+			if (term.endsWith(" ")) continue;
+			if (term.contains("  ")) continue;
+			if (term.endsWith("^")) continue;
 			float score = Float.parseFloat(fields[1]);
 			int count = Integer.parseInt(fields[2]);
 			if (score >= minTechScore && count >= minCount) {
 				Technology ti = new Technology(term, score, count);
-		        taxonomy.technologies.put(term, ti);
+		        taxonomy.terms.put(term, ti);
 			}
 		}
-		System.out.println(
-				String.format("Imported %d technologies", taxonomy.technologies.size()));
+		System.out.println(String.format("Imported %d technologies", taxonomy.terms.size()));
 	}
 
 	/**
@@ -262,12 +269,7 @@ public class TaxonomyLoader {
 			String[] fields = line.split("\t");
 			String term = fields[0].replace('_', ' ');
 			String role = fields[1];
-			Technology technology = taxonomy.technologies.get(term);
-			// TODO: we have 5305 roles, but only 279 of those are technologies
-			// TODO: ... why so few? (this is for SignalProcessing data)
-			// TODO: Would like to do a test for the role (act.equals("t")), but
-			// TODO: ... for now we take them all since with these data we do not
-			// TODO: ... have enough technologies that qualify as a task.
+			Technology technology = taxonomy.terms.get(term);
 			if (technology == null)
 				continue;
 			c++;
@@ -281,7 +283,7 @@ public class TaxonomyLoader {
 	/**
 	 * Read and add feature vectors.
 	 *
-	 * Only read the vectors for terms that occur in the technologies map. The
+	 * Only read the vectors for terms that occur in the terms map. The
 	 * vectors are read from a file that is external to the taxonomy and they
 	 * are added if the vector is for a term that occurs in the taxonomy as a
 	 * technology. The vectors are assumed to be in a gzipped file.
@@ -313,7 +315,7 @@ public class TaxonomyLoader {
 			String[] fields = line.split("\t");
 			if ("".equals(fields[0])) {
 				String term = fields[3];
-				if (taxonomy.technologies.containsKey(term)) {
+				if (taxonomy.terms.containsKey(term)) {
 					// prefix the full filename because the vector initialization
 					// code expects that
 					FeatureVector vector = new FeatureVector(filename + line);
