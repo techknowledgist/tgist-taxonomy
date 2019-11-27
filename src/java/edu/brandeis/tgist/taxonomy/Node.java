@@ -1,5 +1,6 @@
 package edu.brandeis.tgist.taxonomy;
 
+import static edu.brandeis.tgist.taxonomy.Utils.warning;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,12 +8,6 @@ import java.util.Map;
 public class Node {
 
 	static final boolean DEBUG = false;
-	static final String BLUE = "\u001B[34m";
-	static final String GREEN = "\u001B[32m";
-	static final String RED = "\u001B[31m";
-	static final String BOLD = "\u001B[1m";
-	static final String UNDER = "\u001B[4m";
-	static final String END = "\u001B[0m";
 
 	public String name;
 	public Node parent;
@@ -26,10 +21,6 @@ public class Node {
 		this.technology = null;
 	}
 
-	static void warning(String msg) {
-		// TODO: this does not work for the windows command prompt
-		System.out.println(RED + msg + END);
-	}
 
 	@Override
 	public String toString() {
@@ -90,7 +81,6 @@ public class Node {
 
 	void addIsaRelations(Technology hypernym) {
 
-		//System.out.println(BOLD + this.name + END + " " + this.technology + " " + BLUE + hypernym + END);
 		Technology nhypernym = hypernym;
 		if (this.technology != null) {
 			if (hypernym != null) {

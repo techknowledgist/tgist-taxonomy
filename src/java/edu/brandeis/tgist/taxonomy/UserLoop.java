@@ -1,5 +1,9 @@
 package edu.brandeis.tgist.taxonomy;
 
+import static edu.brandeis.tgist.taxonomy.Utils.BLUE;
+import static edu.brandeis.tgist.taxonomy.Utils.BOLD;
+import static edu.brandeis.tgist.taxonomy.Utils.END;
+import static edu.brandeis.tgist.taxonomy.Utils.UNDER;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,7 +50,7 @@ public class UserLoop {
 		HashMap<Integer, String> mappings = new HashMap<>();
 		int idx = 0;
 		System.out.print(
-				String.format("\n%s%s Corpus%s\n\n", Node.BOLD, UserLoop.taxonomy.name, Node.END));
+				String.format("\n%s%s Corpus%s\n\n", BOLD, UserLoop.taxonomy.name, END));
 		System.out.print("Most significant terms:\n\n");
 		Object[] actTerms = UserLoop.taxonomy.getMostSignificantTerms();
 		for (Object technology : actTerms) {
@@ -70,7 +74,7 @@ public class UserLoop {
 		int idx = 0;
 		String hyphens = "-------------------------------------------------";
 		System.out.println("\n" + hyphens + "\n");
-		System.out.println(Node.BOLD + tech.name.toUpperCase() + Node.END + "\n");
+		System.out.println(BOLD + tech.name.toUpperCase() + END + "\n");
 		System.out.println("Occurrences in dataset: " + tech.count + "\n");
 		if (tech.hypernyms.isEmpty())
 			System.out.println("Top");
@@ -79,7 +83,7 @@ public class UserLoop {
 				idx++;
 				mappings.put(idx, hyper.name);
 				System.out.println(String.format("[%d] %s", idx, hyper.name)); }}
-		System.out.println("  " + Node.BLUE + Node.BOLD + tech.name + Node.END);
+		System.out.println("  " + BLUE + BOLD + tech.name + END);
 		int hypoCount = 0;
 		for (Technology hypo : tech.hyponyms) {
 			idx++;
@@ -110,7 +114,7 @@ public class UserLoop {
 		Object[] sortedRelations = tech.relations.values().toArray();
 		Arrays.sort(sortedRelations);
 		if (sortedRelations.length == 0) return idx;
-		System.out.println("\n" + Node.UNDER + "Related terms:" + Node.END + "\n");
+		System.out.println("\n" + UNDER + "Related terms:" + END + "\n");
 		int relCount = 0;
 		for (Object obj : sortedRelations) {
 			idx++;
@@ -134,7 +138,7 @@ public class UserLoop {
 
 		Set<String> rels = new HashSet<>();
 
-		System.out.println("\n" + Node.UNDER + "Relations:" + Node.END + "\n");
+		System.out.println("\n" + UNDER + "Relations:" + END + "\n");
 		for (Object obj : sortedRelations) {
 			TermRelation rel = (TermRelation) obj;
 			String sig = rel.getSignature();
@@ -145,8 +149,7 @@ public class UserLoop {
 			String term2 = rel.target.name;
 			String mapped_term = tech.name.equals(term1) ? term2 : term1;
 			mappings.put(idx, mapped_term);
-			System.out.println(String.format("    [%d]  %s : [%s] ==> [%s]", idx, rel.pred, term1, term2));
-			System.out.print("          ");
+			System.out.print(String.format("    [%d]  ", idx));
 			rel.ppContext();
 		}
 		return idx;

@@ -1,5 +1,7 @@
 package edu.brandeis.tgist.taxonomy;
 
+import static edu.brandeis.tgist.taxonomy.Utils.blue;
+import static edu.brandeis.tgist.taxonomy.Utils.red;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -239,14 +241,35 @@ class Span {
 
 
 class Term extends Span {
-	public Term(String text) { super(text); }
-	@Override void pp() { System.out.print("[ " + this.span + " ] "); }
-	@Override String asString() { return "Term"; }
+
+	public Term(String text)
+	{
+		super(text);
+	}
+	
+	@Override void pp()
+	{
+		System.out.print(blue(this.span) + ' ');
+	}
+
+	@Override String asString()
+	{
+		return "Term";
+	}
+
 }
 
 
 class Pred extends Span {
-	public Pred(String text) { super(text); }
-	@Override void pp() { System.out.print("< " + this.span + " > "); }
+	
+	public Pred(String text)
+	{
+		super(text);
+	}
+
+	@Override void pp()
+	{
+		System.out.print(red(this.span) + ' ');
+	}
 
 }

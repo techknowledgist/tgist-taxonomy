@@ -1,19 +1,16 @@
 
 package edu.brandeis.tgist.taxonomy;
 
+import static edu.brandeis.tgist.taxonomy.Utils.getGzipReader;
+import static edu.brandeis.tgist.taxonomy.Utils.getReader;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.zip.GZIPInputStream;
 
 
 public class TaxonomyLoader {
@@ -277,7 +274,7 @@ public class TaxonomyLoader {
 			taxonomy.roles.add(technology);
 		}
 		System.out.println(
-				String.format("Imported %d ACT classes", c));
+				String.format("Imported %d ACT roles", c));
 	}
 
 	/**
@@ -294,6 +291,7 @@ public class TaxonomyLoader {
 	 * to be too large to keep in memory.
 	 *
 	 * @param featuresFile
+	 * @param taxonomy
 	 * @throws IOException
 	 */
 
@@ -328,43 +326,6 @@ public class TaxonomyLoader {
 		}
 		fWriter.close();
 		System.out.println(String.format("Imported %d vectors", vectorsAdded));
-	}
-
-
-	/**
-	 * Utility to help read a file.
-	 *
-	 * @param fileName
-	 * @return A BufferedReader for fileName
-	 * @throws FileNotFoundException
-	 */
-
-	public static BufferedReader getReader(String fileName)
-			throws FileNotFoundException
-	{
-		FileInputStream fileStream = new FileInputStream(fileName);
-		Reader decoder = new InputStreamReader(fileStream, StandardCharsets.UTF_8);
-		BufferedReader reader = new BufferedReader(decoder);
-		return reader;
-	}
-
-	/**
-	 * Utility to help read a gzipped file.
-	 *
-	 * @param fileName
-	 * @return A BufferedReader
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 */
-
-	static BufferedReader getGzipReader(String fileName)
-			throws FileNotFoundException, IOException
-	{
-		FileInputStream fileStream = new FileInputStream(fileName);
-		InputStream gzipStream = new GZIPInputStream(fileStream);
-		Reader decoder = new InputStreamReader(gzipStream, StandardCharsets.UTF_8);
-		BufferedReader reader = new BufferedReader(decoder);
-		return reader;
 	}
 
 }

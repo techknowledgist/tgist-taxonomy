@@ -1,80 +1,82 @@
 
 package edu.brandeis.tgist.taxonomy;
 
-import java.util.Enumeration;
-import java.util.Vector;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPInputStream;
+
 
 public class Utils
 {
+	static final String BLUE = "\u001B[34m";
+	static final String GREEN = "\u001B[32m";
+	static final String RED = "\u001B[31m";
+	static final String BOLD = "\u001B[1m";
+	static final String UNDER = "\u001B[4m";
+	static final String END = "\u001B[0m";
 
+	
 	public static String bold(String text)
 	{
-		return Node.BOLD + text + Node.END;
+		return BOLD + text + END;
 	}
 
 	public static String red(String text)
 	{
-		return Node.RED + text + Node.END;
+		return RED + text + END;
 	}
 
 	public static String blue(String text)
 	{
-		return Node.BLUE + text + Node.END;
+		return BLUE + text + END;
+	}
+	
+	public static void warning(String msg) {
+		// TODO: this does not work for the windows command prompt
+		System.out.println(RED + msg + END);
 	}
 
 
-	// http://progcookbook.blogspot.com/2006/02/text-wrapping-function-for-java.html
-	static String [] wrapText (String text, int len)
+	/**
+	 * Utility to read a file.
+	 *
+	 * @param fileName
+	 * @return A BufferedReader for fileName
+	 * @throws FileNotFoundException
+	 */
+
+	public static BufferedReader getReader(String fileName)
+			throws FileNotFoundException
 	{
-	  // return empty array for null text
-		if (text == null)
-			return new String [] {};
-
-		// return text if len is zero or less
-		if (len <= 0)
-			return new String [] {text};
-
-		// return text if less than length
-		if (text.length() <= len)
-			return new String [] {text};
-
-		char [] chars = text.toCharArray();
-		Vector lines = new Vector();
-		StringBuffer line = new StringBuffer();
-		StringBuffer word = new StringBuffer();
-
-		for (int i = 0; i < chars.length; i++) {
-			word.append(chars[i]);
-			if (chars[i] == ' ') {
-				if ((line.length() + word.length()) > len) {
-					lines.add(line.toString());
-					line.delete(0, line.length());
-				}
-				line.append(word);
-				word.delete(0, word.length());
-			}
-		}
-
-		// handle any extra chars in current word
-		if (word.length() > 0) {
-			if ((line.length() + word.length()) > len) {
-				lines.add(line.toString());
-				line.delete(0, line.length());
-			}
-			line.append(word);
-		}
-
-		// handle extra line
-		if (line.length() > 0) {
-			lines.add(line.toString());
-		}
-
-		String [] ret = new String[lines.size()];
-		int c = 0; // counter
-		for (Enumeration e = lines.elements(); e.hasMoreElements(); c++) {
-			ret[c] = (String) e.nextElement();
-		}
-
-		return ret;
+		FileInputStream fileStream = new FileInputStream(fileName);
+		Reader decoder = new InputStreamReader(fileStream, StandardCharsets.UTF_8);
+		BufferedReader reader = new BufferedReader(decoder);
+		return reader;
 	}
+
+	/**
+	 * Utility to read a gzipped file.
+	 *
+	 * @param fileName
+	 * @return A BufferedReader
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+
+	public static BufferedReader getGzipReader(String fileName)
+			throws FileNotFoundException, IOException
+	{
+		FileInputStream fileStream = new FileInputStream(fileName);
+		InputStream gzipStream = new GZIPInputStream(fileStream);
+		Reader decoder = new InputStreamReader(gzipStream, StandardCharsets.UTF_8);
+		BufferedReader reader = new BufferedReader(decoder);
+		return reader;
+	}
+
 }

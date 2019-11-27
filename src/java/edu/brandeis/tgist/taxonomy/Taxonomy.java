@@ -205,11 +205,11 @@ public class Taxonomy {
 	{
 		// Use the following if you want to get the most frequent terms overall
 		// Object[] terms = this.terms.values().toArray();
-		Object[] terms = this.roles.toArray();
-		Arrays.sort(terms);
-		return terms.length <= NUMBER_OF_TERMS
-				? terms
-				: Arrays.copyOfRange(terms, 0, NUMBER_OF_TERMS);
+		Object[] allTerms = this.roles.toArray();
+		Arrays.sort(allTerms);
+		return allTerms.length <= NUMBER_OF_TERMS
+				? allTerms
+				: Arrays.copyOfRange(allTerms, 0, NUMBER_OF_TERMS);
 	}
 
 	@Override

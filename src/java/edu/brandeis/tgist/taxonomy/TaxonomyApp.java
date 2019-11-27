@@ -1,5 +1,8 @@
 package edu.brandeis.tgist.taxonomy;
 
+import static edu.brandeis.tgist.taxonomy.Utils.BLUE;
+import static edu.brandeis.tgist.taxonomy.Utils.END;
+import static edu.brandeis.tgist.taxonomy.Utils.RED;
 import static edu.brandeis.tgist.taxonomy.Utils.blue;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -62,10 +65,10 @@ public class TaxonomyApp {
 
 	private static void printUsage() {
 		System.out.println(usage()
-				.replace("<b>", Node.BLUE)
-				.replace("</b>", Node.END)
-				.replace("<u>", Node.RED)
-				.replace("</u>", Node.END));
+				.replace("<b>", BLUE)
+				.replace("</b>", END)
+				.replace("<u>", RED)
+				.replace("</u>", END));
 	}
 
 	private static String usage() {
@@ -90,8 +93,8 @@ public class TaxonomyApp {
 	 * Create a taxonomy from scratch. Initializes, imports data, creates the
 	 * hierarchy and adds relations.
 	 *
-	 * @param taxonomyName
 	 * @param taxonomyLocation
+	 * @param dataLocation
 	 */
 
 	private static void create(String taxonomyLocation, String dataLocation)
